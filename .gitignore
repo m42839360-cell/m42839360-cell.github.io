@@ -28,3 +28,7 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Blog automation runtime files
+.last_build
+data/commits.json
