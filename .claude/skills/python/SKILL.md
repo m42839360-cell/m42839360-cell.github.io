@@ -122,9 +122,25 @@ uv add fastapi uvicorn
 uv run uvicorn main:app
 ```
 
-## Code Formatting
+## Code Quality and Formatting
 
-**ALWAYS run `uvx ruff foramt` when finishing up** to ensure code is properly formatted:
+**ALWAYS run these commands when finishing up** to ensure code quality and proper formatting:
+
+### 1. Check and Fix Issues
+
+```bash
+# Check all Python files for issues
+uvx ruff check
+
+# Check and automatically fix issues where possible
+uvx ruff check --fix
+
+# Check specific file(s)
+uvx ruff check script.py
+uvx ruff check src/
+```
+
+### 2. Format Code
 
 ```bash
 # Format all Python files in the project
@@ -135,21 +151,29 @@ uvx ruff format script.py
 uvx ruff format src/
 ```
 
-Run formatting:
-- After creating or modifying Python files
-- Before running the final version of scripts
-- As the final step before completing the task
+### Workflow
+
+Run these steps **in this order** before committing:
+1. After creating or modifying Python files
+2. Run `uvx ruff check --fix` to check for issues and fix automatically fixable ones
+3. Review any remaining issues and fix them manually
+4. Run `uvx ruff format` to format the code
+5. Verify all checks pass with `uvx ruff check`
+6. Only then proceed to commit
 
 ## Important Notes
 
 - **NEVER** use `python` command directly
 - **NEVER** use `pip` for package installation
 - **ALWAYS** check if it's a single script or a project first
-- **ALWAYS** run `uvx ruff format` when finishing up to format the code
+- **ALWAYS** run `uvx ruff check` and `uvx ruff format` before committing:
+  1. First run `uvx ruff check --fix` to automatically fix issues
+  2. Then run `uvx ruff format` to format the code
+  3. Finally verify with `uvx ruff check` before committing
 - For single scripts, include ALL dependencies in the PEP 723 header
 - Use semantic versioning for dependencies (e.g., `>=2.0.0`, `~=1.5.0`)
 - When creating new Python files, default to the UV shebang approach unless it's clearly part of a larger project
 
 ## Your Task
 
-Proceed with the user's Python-related request, strictly following the UV execution rules above. Remember to run `uvx ruff` as your final step.
+Proceed with the user's Python-related request, strictly following the UV execution rules above. Remember to run `uvx ruff check --fix` and `uvx ruff format` as your final steps before committing.
