@@ -237,6 +237,94 @@ class GitHubAPIClient:
 
         return events
 
+    def get_user_repos(self, username: str) -> List[Dict[str, Any]]:
+        """Fetch all repositories for a user with pagination."""
+        repos = []
+        page = 1
+        per_page = 100
+
+        while True:
+            url = f"{self.BASE_URL}/users/{username}/repos"
+            params = {
+                "per_page": per_page,
+                "page": page,
+                "sort": "pushed",  # Most recently pushed first
+                "type": "owner",  # Only repos owned by the user
+            }
+
+            try:
+                response = self.session.get(url, params=params, timeout=10)
+
+                if response.status_code != 200:
+                    print(f"⚠ Failed to fetch repositories: {response.status_code}")
+                    break
+
+                page_repos = response.json()
+                if not page_repos:
+                    break
+
+                repos.extend(page_repos)
+                print(f"  Fetched {len(page_repos)} repositories (page {page})")
+
+                if len(page_repos) < per_page:
+                    break
+
+                page += 1
+                time.sleep(0.5)  # Rate limiting
+
+            except Exception as e:
+                print(f"⚠ Error fetching repositories: {e}")
+                break
+
+        return repos
+
+    def get_repo_commits(
+        self, repo_full_name: str, since: datetime, per_page: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Fetch commits for a repository since a given date."""
+        commits = []
+        page = 1
+
+        while True:
+            url = f"{self.BASE_URL}/repos/{repo_full_name}/commits"
+            params = {
+                "since": since.isoformat(),
+                "per_page": per_page,
+                "page": page,
+            }
+
+            try:
+                response = self.session.get(url, params=params, timeout=10)
+
+                if response.status_code == 404:
+                    # Repository not found or no access
+                    return commits
+
+                if response.status_code != 200:
+                    print(
+                        f"⚠ Failed to fetch commits for {repo_full_name}: {response.status_code}"
+                    )
+                    break
+
+                page_commits = response.json()
+                if not page_commits:
+                    break
+
+                commits.extend(page_commits)
+
+                # Stop if we got fewer results than requested (last page)
+                if len(page_commits) < per_page:
+                    break
+
+                page += 1
+                time.sleep(0.3)  # Rate limiting
+
+            except Exception as e:
+                print(f"⚠ Error fetching commits for {repo_full_name}: {e}")
+                break
+
+        return commits
+
     def get_commit_details(
         self, repo_full_name: str, commit_sha: str
     ) -> Optional[Dict[str, Any]]:
@@ -405,6 +493,109 @@ class CommitProcessor:
             },
         }
 
+    def fetch_commits_direct(
+        self, api_client: GitHubAPIClient, username: str
+    ) -> List[Dict[str, Any]]:
+        """Fetch commits directly from Commits API instead of Events API."""
+        commits = []
+        seen_commits = set()
+
+        print(f"  Fetching repositories for user: {username}")
+        repos = api_client.get_user_repos(username)
+        print(f"  Found {len(repos)} repositories")
+
+        # Filter repositories
+        filtered_repos = []
+        for repo in repos:
+            repo_full_name = repo.get("full_name", "")
+            if not self._should_exclude_repo(repo_full_name):
+                filtered_repos.append(repo)
+
+        print(f"  Processing {len(filtered_repos)} repositories (after filters)")
+
+        # Fetch commits from each repository
+        for repo in filtered_repos:
+            repo_full_name = repo.get("full_name", "")
+            repo_name = repo.get("name", "")
+
+            print(f"    Fetching commits from {repo_name}...")
+
+            repo_commits = api_client.get_repo_commits(repo_full_name, self.since)
+
+            if not repo_commits:
+                continue
+
+            print(f"      Found {len(repo_commits)} commits")
+
+            # Process each commit
+            for commit_data in repo_commits:
+                commit_sha = commit_data.get("sha", "")
+
+                if commit_sha in seen_commits:
+                    continue
+
+                seen_commits.add(commit_sha)
+
+                # Extract commit details
+                commit_info = commit_data.get("commit", {})
+                author_info = commit_info.get("author", {})
+
+                # Parse commit date
+                commit_date_str = author_info.get("date", "")
+                try:
+                    commit_date = datetime.fromisoformat(
+                        commit_date_str.replace("Z", "+00:00")
+                    )
+                except ValueError:
+                    commit_date = datetime.now(timezone.utc)
+
+                # Check if commit is within date range
+                if commit_date < self.since:
+                    continue
+
+                # Get detailed commit info to include files
+                detailed_commit = api_client.get_commit_details(repo_full_name, commit_sha)
+
+                if not detailed_commit:
+                    # If we can't get details, skip this commit
+                    continue
+
+                # Extract files changed from detailed commit
+                files = []
+                for file_info in detailed_commit.get("files", []):
+                    files.append(
+                        {
+                            "filename": file_info.get("filename", ""),
+                            "status": file_info.get("status", ""),
+                            "additions": file_info.get("additions", 0),
+                            "deletions": file_info.get("deletions", 0),
+                            "changes": file_info.get("changes", 0),
+                        }
+                    )
+
+                # Create commit record
+                processed_commit = {
+                    "sha": commit_sha,
+                    "message": commit_info.get("message", ""),
+                    "date": commit_date_str,
+                    "author": author_info.get("name", "Unknown"),
+                    "author_email": author_info.get("email", ""),
+                    "repository": repo_full_name,
+                    "url": commit_data.get("html_url", ""),
+                    "files": files,
+                    "stats": {
+                        "additions": detailed_commit.get("stats", {}).get("additions", 0),
+                        "deletions": detailed_commit.get("stats", {}).get("deletions", 0),
+                        "total": detailed_commit.get("stats", {}).get("total", 0),
+                    },
+                }
+
+                commits.append(processed_commit)
+                time.sleep(0.3)  # Rate limiting for detail fetches
+
+        print(f"  Total commits collected: {len(commits)}")
+        return commits
+
     def group_by_repository(
         self, commits: List[Dict[str, Any]]
     ) -> Dict[str, List[Dict[str, Any]]]:
@@ -484,17 +675,14 @@ def main():
             print("✗ Cannot proceed with invalid GitHub token")
             sys.exit(1)
 
-        events = api_client.get_user_events(username)
-        print(f"  Fetched {len(events)} events total")
-
-        # Process commits
+        # Process commits using Commits API (more reliable than Events API)
         print("\n[4/5] Processing commits...")
         processor = CommitProcessor(
             since=since,
             repo_filters=config.get_repo_filters(),
             exclude_repos=config.get_exclude_repos(),
         )
-        commits = processor.extract_commits(events, api_client)
+        commits = processor.fetch_commits_direct(api_client, username)
         print(f"  Found {len(commits)} commits")
 
         # Group by repository
