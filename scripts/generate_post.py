@@ -54,7 +54,9 @@ class CommitDataLoader:
 
         lines = []
         lines.append(f"Total commits: {total_commits}")
-        lines.append(f"Time period: {data.get('since', 'N/A')} to {data.get('fetched_at', 'N/A')}")
+        lines.append(
+            f"Time period: {data.get('since', 'N/A')} to {data.get('fetched_at', 'N/A')}"
+        )
         lines.append("")
 
         for repo_name, commits in repositories.items():
@@ -247,7 +249,9 @@ class OllamaClient(LLMClient):
 
         response = self.session.post(url, json=payload)
         if response.status_code != 200:
-            raise Exception(f"Ollama API error: {response.status_code} - {response.text}")
+            raise Exception(
+                f"Ollama API error: {response.status_code} - {response.text}"
+            )
 
         return response.json().get("response", "")
 
@@ -331,8 +335,8 @@ CONTENT GUIDELINES:
 - Write an engaging introduction paragraph
 - Group related changes together logically
 - Explain the impact and purpose of the changes
-{'- Include relevant code snippets where appropriate' if include_code else ''}
-{'- Include statistics about the changes (lines added/removed, files changed)' if include_stats else ''}
+{"- Include relevant code snippets where appropriate" if include_code else ""}
+{"- Include statistics about the changes (lines added/removed, files changed)" if include_stats else ""}
 - End with a conclusion or next steps section
 
 DEVELOPMENT ACTIVITY:
@@ -357,7 +361,9 @@ class JekyllPostGenerator:
         if title_match:
             title = title_match.group(1).strip()
             # Remove the title from content since it will be in frontmatter
-            content = re.sub(r"^#\s+.+$\n?", "", llm_content, count=1, flags=re.MULTILINE)
+            content = re.sub(
+                r"^#\s+.+$\n?", "", llm_content, count=1, flags=re.MULTILINE
+            )
         else:
             title = "Development Update"
             content = llm_content
@@ -373,7 +379,7 @@ class JekyllPostGenerator:
 layout: post
 title: "{title}"
 date: {now.strftime("%Y-%m-%d %H:%M:%S %z")}
-categories: {' '.join(default_tags)}
+categories: {" ".join(default_tags)}
 author: {author}
 ---
 

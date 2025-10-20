@@ -91,7 +91,9 @@ class WorkflowOrchestrator:
                 self.print_success(f"{description} completed")
                 return True, result.stdout, result.stderr
             else:
-                self.print_error(f"{description} failed with exit code {result.returncode}")
+                self.print_error(
+                    f"{description} failed with exit code {result.returncode}"
+                )
                 if result.stderr:
                     print(f"  Error: {result.stderr}")
                 return False, result.stdout, result.stderr

@@ -127,9 +127,9 @@ class GitHubAPIClient:
             response = self.session.get(f"{self.BASE_URL}/user", timeout=10)
 
             if response.status_code == 401:
-                print("\n" + "="*60)
+                print("\n" + "=" * 60)
                 print("✗ ERROR: Invalid GitHub Token")
-                print("="*60)
+                print("=" * 60)
                 print("\nYour GITHUB_TOKEN in .env file is invalid or expired.")
                 print("\nTo fix this issue:")
                 print("1. Go to: https://github.com/settings/tokens")
@@ -141,24 +141,26 @@ class GitHubAPIClient:
                 print("  - No spaces around the '='")
                 print("  - No quotes around the token")
                 print("  - No extra whitespace")
-                print("="*60 + "\n")
+                print("=" * 60 + "\n")
                 return False
 
             if response.status_code == 403:
-                print("\n" + "="*60)
+                print("\n" + "=" * 60)
                 print("✗ ERROR: GitHub Token Lacks Required Permissions")
-                print("="*60)
+                print("=" * 60)
                 print("\nYour token doesn't have the required scopes.")
                 print("\nTo fix:")
                 print("1. Go to: https://github.com/settings/tokens")
                 print("2. Click on your token")
                 print("3. Add 'public_repo' scope (or 'repo' for private repos)")
                 print("4. Or generate a new token with correct scopes")
-                print("="*60 + "\n")
+                print("=" * 60 + "\n")
                 return False
 
             if response.status_code != 200:
-                print(f"⚠ Warning: Unexpected response from GitHub API: {response.status_code}")
+                print(
+                    f"⚠ Warning: Unexpected response from GitHub API: {response.status_code}"
+                )
                 return True  # Continue anyway
 
             # Token is valid
@@ -209,8 +211,12 @@ class GitHubAPIClient:
                 reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
                 if reset_time:
                     reset_dt = datetime.fromtimestamp(reset_time, tz=timezone.utc)
-                    wait_seconds = (reset_dt - datetime.now(timezone.utc)).total_seconds()
-                    print(f"⚠ Rate limit exceeded. Waiting {wait_seconds:.0f} seconds...")
+                    wait_seconds = (
+                        reset_dt - datetime.now(timezone.utc)
+                    ).total_seconds()
+                    print(
+                        f"⚠ Rate limit exceeded. Waiting {wait_seconds:.0f} seconds..."
+                    )
                     time.sleep(max(wait_seconds + 1, 0))
                     continue
                 else:
@@ -336,9 +342,7 @@ class GitHubAPIClient:
             if response.status_code == 200:
                 return response.json()
             else:
-                print(
-                    f"⚠ Failed to fetch commit {commit_sha}: {response.status_code}"
-                )
+                print(f"⚠ Failed to fetch commit {commit_sha}: {response.status_code}")
                 return None
         except Exception as e:
             print(f"⚠ Error fetching commit {commit_sha}: {e}")
@@ -419,10 +423,12 @@ class CommitProcessor:
 
         # Warn if all push events had empty commit payloads
         if push_events_count > 0 and empty_payloads_count == push_events_count:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("⚠ WARNING: GitHub Events API Returned Empty Commit Data")
-            print("="*60)
-            print(f"\nFound {push_events_count} push events, but all had empty commit payloads.")
+            print("=" * 60)
+            print(
+                f"\nFound {push_events_count} push events, but all had empty commit payloads."
+            )
             print("\nThis usually means:")
             print("1. Your GITHUB_TOKEN may be invalid or expired")
             print("2. The token lacks required scopes (needs 'repo' or 'public_repo')")
@@ -432,7 +438,7 @@ class CommitProcessor:
             print("2. Generate a new token: https://github.com/settings/tokens")
             print("3. Ensure the token has 'public_repo' scope")
             print("4. Update .env and remove .last_build file")
-            print("="*60 + "\n")
+            print("=" * 60 + "\n")
 
         return commits
 
@@ -554,7 +560,9 @@ class CommitProcessor:
                     continue
 
                 # Get detailed commit info to include files
-                detailed_commit = api_client.get_commit_details(repo_full_name, commit_sha)
+                detailed_commit = api_client.get_commit_details(
+                    repo_full_name, commit_sha
+                )
 
                 if not detailed_commit:
                     # If we can't get details, skip this commit
@@ -584,8 +592,12 @@ class CommitProcessor:
                     "url": commit_data.get("html_url", ""),
                     "files": files,
                     "stats": {
-                        "additions": detailed_commit.get("stats", {}).get("additions", 0),
-                        "deletions": detailed_commit.get("stats", {}).get("deletions", 0),
+                        "additions": detailed_commit.get("stats", {}).get(
+                            "additions", 0
+                        ),
+                        "deletions": detailed_commit.get("stats", {}).get(
+                            "deletions", 0
+                        ),
                         "total": detailed_commit.get("stats", {}).get("total", 0),
                     },
                 }

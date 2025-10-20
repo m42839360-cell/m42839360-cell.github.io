@@ -124,15 +124,15 @@ uv run uvicorn main:app
 
 ## Code Formatting
 
-**ALWAYS run `uv format` when finishing up** to ensure code is properly formatted:
+**ALWAYS run `uvx ruff foramt` when finishing up** to ensure code is properly formatted:
 
 ```bash
 # Format all Python files in the project
-uv format
+uvx ruff format
 
 # Format specific file(s)
-uv format script.py
-uv format src/
+uvx ruff format script.py
+uvx ruff format src/
 ```
 
 Run formatting:
@@ -145,11 +145,11 @@ Run formatting:
 - **NEVER** use `python` command directly
 - **NEVER** use `pip` for package installation
 - **ALWAYS** check if it's a single script or a project first
-- **ALWAYS** run `uv format` when finishing up to format the code
+- **ALWAYS** run `uvx ruff format` when finishing up to format the code
 - For single scripts, include ALL dependencies in the PEP 723 header
 - Use semantic versioning for dependencies (e.g., `>=2.0.0`, `~=1.5.0`)
 - When creating new Python files, default to the UV shebang approach unless it's clearly part of a larger project
 
 ## Your Task
 
-Proceed with the user's Python-related request, strictly following the UV execution rules above. Remember to run `uv format` as your final step.
+Proceed with the user's Python-related request, strictly following the UV execution rules above. Remember to run `uvx ruff` as your final step.
