@@ -1,0 +1,5 @@
+{
+  "name": "python",
+  "description": "Execute Python code using uv with proper dependency management",
+  "version": "1.0.0"
+}
