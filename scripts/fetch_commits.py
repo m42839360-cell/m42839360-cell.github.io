@@ -118,6 +118,59 @@ class GitHubAPIClient:
             self.session.headers.update({"Authorization": f"token {self.token}"})
         self.session.headers.update({"Accept": "application/vnd.github.v3+json"})
 
+    def validate_token(self) -> bool:
+        """Validate GitHub token by testing authentication."""
+        if not self.token:
+            return True  # No token is fine, just limited rate
+
+        try:
+            response = self.session.get(f"{self.BASE_URL}/user", timeout=10)
+
+            if response.status_code == 401:
+                print("\n" + "="*60)
+                print("✗ ERROR: Invalid GitHub Token")
+                print("="*60)
+                print("\nYour GITHUB_TOKEN in .env file is invalid or expired.")
+                print("\nTo fix this issue:")
+                print("1. Go to: https://github.com/settings/tokens")
+                print("2. Generate a new Personal Access Token")
+                print("3. Required scopes: 'public_repo' (or 'repo' for private repos)")
+                print("4. Update your .env file:")
+                print("   GITHUB_TOKEN=ghp_your_new_token_here")
+                print("\nMake sure there are:")
+                print("  - No spaces around the '='")
+                print("  - No quotes around the token")
+                print("  - No extra whitespace")
+                print("="*60 + "\n")
+                return False
+
+            if response.status_code == 403:
+                print("\n" + "="*60)
+                print("✗ ERROR: GitHub Token Lacks Required Permissions")
+                print("="*60)
+                print("\nYour token doesn't have the required scopes.")
+                print("\nTo fix:")
+                print("1. Go to: https://github.com/settings/tokens")
+                print("2. Click on your token")
+                print("3. Add 'public_repo' scope (or 'repo' for private repos)")
+                print("4. Or generate a new token with correct scopes")
+                print("="*60 + "\n")
+                return False
+
+            if response.status_code != 200:
+                print(f"⚠ Warning: Unexpected response from GitHub API: {response.status_code}")
+                return True  # Continue anyway
+
+            # Token is valid
+            user_data = response.json()
+            username = user_data.get("login", "unknown")
+            print(f"✓ GitHub token validated for user: {username}")
+            return True
+
+        except requests.exceptions.RequestException as e:
+            print(f"⚠ Warning: Could not validate GitHub token: {e}")
+            return True  # Continue anyway
+
     def _check_rate_limit(self) -> None:
         """Check and display current rate limit status."""
         response = self.session.get(f"{self.BASE_URL}/rate_limit")
@@ -223,6 +276,8 @@ class CommitProcessor:
         """Extract and process commits from events."""
         commits = []
         seen_commits = set()
+        push_events_count = 0
+        empty_payloads_count = 0
 
         for event in events:
             # Only process PushEvents
@@ -253,6 +308,10 @@ class CommitProcessor:
             payload = event.get("payload", {})
             push_commits = payload.get("commits", [])
 
+            push_events_count += 1
+            if not push_commits:
+                empty_payloads_count += 1
+
             for commit in push_commits:
                 commit_sha = commit.get("sha", "")
                 if commit_sha in seen_commits:
@@ -269,6 +328,23 @@ class CommitProcessor:
                     )
                     commits.append(processed)
                     time.sleep(0.3)  # Rate limiting
+
+        # Warn if all push events had empty commit payloads
+        if push_events_count > 0 and empty_payloads_count == push_events_count:
+            print("\n" + "="*60)
+            print("⚠ WARNING: GitHub Events API Returned Empty Commit Data")
+            print("="*60)
+            print(f"\nFound {push_events_count} push events, but all had empty commit payloads.")
+            print("\nThis usually means:")
+            print("1. Your GITHUB_TOKEN may be invalid or expired")
+            print("2. The token lacks required scopes (needs 'repo' or 'public_repo')")
+            print("3. GitHub's Events API has limitations for your account")
+            print("\nTo fix:")
+            print("1. Check your .env file has a valid GITHUB_TOKEN")
+            print("2. Generate a new token: https://github.com/settings/tokens")
+            print("3. Ensure the token has 'public_repo' scope")
+            print("4. Update .env and remove .last_build file")
+            print("="*60 + "\n")
 
         return commits
 
@@ -402,6 +478,12 @@ def main():
         # Fetch commits
         print("\n[3/5] Fetching commits from GitHub...")
         api_client = GitHubAPIClient(token=config.github_token)
+
+        # Validate token before proceeding
+        if not api_client.validate_token():
+            print("✗ Cannot proceed with invalid GitHub token")
+            sys.exit(1)
+
         events = api_client.get_user_events(username)
         print(f"  Fetched {len(events)} events total")
 

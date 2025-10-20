@@ -4,7 +4,7 @@
 # GitHub Configuration
 github:
   # Your GitHub username
-  username: "m42839360-cell"
+  username: "maluio"
 
   # Repository filters (optional)
   # Only commits from these repos will be included
@@ -26,7 +26,7 @@ github:
 # LLM Configuration
 llm:
   # LLM provider: "openai", "anthropic", "ollama", or "openrouter"
-  provider: "anthropic"
+  provider: "openai"
 
   # API key (use environment variable for security)
   # Set this in .env file as: LLM_API_KEY=your_key_here
@@ -36,7 +36,7 @@ llm:
   # OpenAI: "gpt-4", "gpt-3.5-turbo"
   # Anthropic: "claude-3-5-sonnet-20241022", "claude-3-opus-20240229"
   # Ollama: "llama2", "mistral", "codellama"
-  model: "claude-3-5-sonnet-20241022"
+  model: "gpt-5-mini"
 
   # Article style/tone
   # Options: "technical", "casual", "detailed", "concise", "tutorial", "story"
@@ -53,7 +53,7 @@ llm:
 automation:
   # Number of days to look back for commits (for local testing)
   # Default: 7 days
-  lookback_days: 7
+  lookback_days: 60
 
   # Minimum commits required to generate a post
   min_commits: 3
