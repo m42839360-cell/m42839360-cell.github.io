@@ -1,0 +1,89 @@
+# Blog Automation Configuration
+# This file contains settings for the automated blog post generation system
+
+# GitHub Configuration
+github:
+  # Your GitHub username
+  username: "m42839360-cell"
+
+  # Repository filters (optional)
+  # Only commits from these repos will be included
+  # Leave empty to include all repos
+  repo_filters: []
+  # Example:
+  # repo_filters:
+  #   - "my-project"
+  #   - "another-repo"
+
+  # Repositories to exclude from blog posts
+  exclude_repos:
+    - "m42839360-cell.github.io"  # Don't blog about the blog itself
+  # Example: Add more repos to exclude
+  # exclude_repos:
+  #   - "private-notes"
+  #   - "test-repo"
+
+# LLM Configuration
+llm:
+  # LLM provider: "openai", "anthropic", "ollama", or "openrouter"
+  provider: "anthropic"
+
+  # API key (use environment variable for security)
+  # Set this in .env file as: LLM_API_KEY=your_key_here
+  api_key_env: "LLM_API_KEY"
+
+  # Model to use for generating blog posts
+  # OpenAI: "gpt-4", "gpt-3.5-turbo"
+  # Anthropic: "claude-3-5-sonnet-20241022", "claude-3-opus-20240229"
+  # Ollama: "llama2", "mistral", "codellama"
+  model: "claude-3-5-sonnet-20241022"
+
+  # Article style/tone
+  # Options: "technical", "casual", "detailed", "concise", "tutorial", "story"
+  article_style: "technical"
+
+  # Maximum tokens for generation
+  max_tokens: 2000
+
+  # Temperature for creativity (0.0-1.0)
+  # Lower = more focused, Higher = more creative
+  temperature: 0.7
+
+# Automation Settings
+automation:
+  # Number of days to look back for commits (for local testing)
+  # Default: 7 days
+  lookback_days: 7
+
+  # Minimum commits required to generate a post
+  min_commits: 3
+
+  # Maximum commits to include in a single post
+  max_commits: 20
+
+  # Post frequency for GitHub Actions
+  # Options: "daily", "weekly", "biweekly", "monthly"
+  frequency: "weekly"
+
+# Blog Post Settings
+blog:
+  # Post title template
+  # Available variables: {date}, {week}, {month}, {year}, {commit_count}
+  title_template: "Development Update - Week of {date}"
+
+  # Include code snippets in posts
+  include_code_snippets: true
+
+  # Maximum length of code snippets (lines)
+  max_snippet_lines: 20
+
+  # Include commit statistics
+  include_stats: true
+
+  # Tags to automatically apply
+  default_tags:
+    - "development"
+    - "updates"
+
+  # Author name for posts
+  author: "m42839360-cell"

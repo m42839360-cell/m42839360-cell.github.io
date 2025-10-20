@@ -25,6 +25,9 @@ exclude:
   - backlog/
   - .claude/
   - CLAUDE.md
+  - config.yml
+  - .env.example
+  - .env
 
 # Collections
 collections:
