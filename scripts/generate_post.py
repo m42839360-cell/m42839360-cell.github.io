@@ -174,12 +174,21 @@ class OpenAIClient(LLMClient):
 
     def generate(self, prompt: str) -> str:
         """Generate text using OpenAI API."""
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-        )
+        # Newer models (gpt-4o, gpt-4o-mini, etc.) use max_completion_tokens
+        # Older models (gpt-4, gpt-3.5-turbo) use max_tokens
+        kwargs = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": self.temperature,
+        }
+
+        # Use max_completion_tokens for newer models, max_tokens for older ones
+        if "gpt-4o" in self.model or "gpt-5" in self.model:
+            kwargs["max_completion_tokens"] = self.max_tokens
+        else:
+            kwargs["max_tokens"] = self.max_tokens
+
+        response = self.client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
 
 
