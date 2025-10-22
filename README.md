@@ -1,6 +1,43 @@
 # Dev Blog - Automated Commit-Based Blog Posts
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Active-brightgreen)](https://m42839360-cell.github.io)
+[![Jekyll](https://img.shields.io/badge/Jekyll-4.4-red)](https://jekyllrb.com/)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
+
 An automated blogging system that generates blog posts from your GitHub commit history using AI.
+
+## Quick Start
+
+Get your automated blog running in 5 minutes:
+
+1. **Fork this repository** or use as template
+2. **Clone to your local machine**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+   cd YOUR_REPO
+   ```
+3. **Configure your blog**
+   ```bash
+   cp config.yml.example config.yml
+   # Edit config.yml: Update username, provider, model
+   cp .env.example .env
+   # Edit .env: Add your LLM_API_KEY
+   ```
+4. **Enable GitHub Pages**
+   - Go to Settings → Pages
+   - Source: Deploy from branch `main` / (root)
+5. **Add repository secrets**
+   - Settings → Secrets → Actions → New secret
+   - Add `LLM_API_KEY` with your API key
+   - (Optional) Add `GITHUB_TOKEN` for higher rate limits
+6. **Trigger first workflow**
+   - Go to Actions → "Automated Blog Post Generation"
+   - Click "Run workflow" → Set lookback_days to 30 → Run
+7. **Visit your blog!**
+   - `https://YOUR_USERNAME.github.io`
+
+See detailed setup instructions below.
 
 ## Overview
 
