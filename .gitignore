@@ -30,5 +30,5 @@ Thumbs.db
 .env.local
 
 # Blog automation runtime files
-.last_build
+# Note: .last_build is tracked in git for GitHub Actions timestamp persistence
 data/commits.json

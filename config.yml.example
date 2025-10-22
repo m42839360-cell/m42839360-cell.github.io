@@ -1,10 +1,11 @@
 # Blog Automation Configuration
 # This file contains settings for the automated blog post generation system
+# Copy this to config.yml and customize for your setup
 
 # GitHub Configuration
 github:
   # Your GitHub username
-  username: "maluio"
+  username: "your-github-username"
 
   # Repository filters (optional)
   # Only commits from these repos will be included
@@ -17,7 +18,7 @@ github:
 
   # Repositories to exclude from blog posts
   exclude_repos:
-    - "m42839360-cell.github.io"  # Don't blog about the blog itself
+    - "your-username.github.io"  # Don't blog about the blog itself
   # Example: Add more repos to exclude
   # exclude_repos:
   #   - "private-notes"
@@ -29,7 +30,9 @@ llm:
   provider: "openai"
 
   # API key (use environment variable for security)
+  # NEVER put your actual API key here!
   # Set this in .env file as: LLM_API_KEY=your_key_here
+  # For GitHub Actions: Add LLM_API_KEY to repository secrets
   api_key_env: "LLM_API_KEY"
 
   # Model to use for generating blog posts
@@ -54,7 +57,7 @@ automation:
   # Number of days to look back for commits
   # - Local testing: Use this value
   # - GitHub Actions: Overridden by workflow_dispatch parameter (default: 7)
-  lookback_days: 60
+  lookback_days: 7
 
   # Minimum commits required to generate a post
   min_commits: 3
@@ -90,4 +93,4 @@ blog:
     - "updates"
 
   # Author name for posts
-  author: "m42839360-cell"
+  author: "your-github-username"
