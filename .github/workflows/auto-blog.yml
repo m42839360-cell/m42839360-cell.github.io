@@ -22,6 +22,7 @@ on:
 # Grant write permissions to commit and push changes
 permissions:
   contents: write
+  actions: read
 
 jobs:
   generate-blog-post:
@@ -53,7 +54,7 @@ jobs:
 
       - name: Fetch commits from GitHub
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           LOOKBACK_DAYS: ${{ inputs.lookback_days || 7 }}
         run: |
           echo "Fetching commits from GitHub API..."
@@ -89,7 +90,7 @@ jobs:
         if: steps.check_commits.outputs.should_generate == 'true'
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           echo "Generating blog post with LLM..."
           ./scripts/generate_post.py --config config.yml --input data/commits.json
