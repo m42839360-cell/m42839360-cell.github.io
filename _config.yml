@@ -7,7 +7,7 @@ email: your-email@example.com
 # Build settings
 markdown: kramdown
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site
+url: "https://m42839360-cell.github.io" # the base hostname & protocol for your site
 
 # Plugins
 plugins:
