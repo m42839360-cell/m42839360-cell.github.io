@@ -4,4 +4,4 @@ source "https://rubygems.org"
 gem "github-pages", group: :jekyll_plugins
 
 # Webrick for local development (Ruby 3+)
-gem "webrick", "~> 1.8"
+gem "webrick"

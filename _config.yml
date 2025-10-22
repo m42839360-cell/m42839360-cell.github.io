@@ -26,8 +26,13 @@ exclude:
   - .claude/
   - CLAUDE.md
   - config.yml
+  - config.yml.example
   - .env.example
   - .env
+  - scripts/
+  - data/
+  - .github/
+  - .last_build
 
 # Collections
 collections:
