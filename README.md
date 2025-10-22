@@ -257,7 +257,39 @@ The blog can automatically generate posts using GitHub Actions. See the **GitHub
 
 ## GitHub Actions Setup
 
-To enable automated blog post generation via GitHub Actions, you need to configure repository secrets.
+The repository includes a GitHub Actions workflow (`.github/workflows/auto-blog.yml`) that automatically generates blog posts from your commit history.
+
+### How It Works
+
+The workflow:
+1. **Runs weekly** (Monday at 9 AM UTC) or can be triggered manually
+2. **Fetches your recent commits** using the GitHub API
+3. **Generates a blog post** using your configured LLM provider
+4. **Commits and pushes** the new post to trigger Jekyll rebuild
+5. **Publishes automatically** via GitHub Pages
+
+### Workflow Configuration
+
+The workflow is already configured in `.github/workflows/auto-blog.yml` with:
+
+- **Scheduled trigger:** Weekly on Monday at 9 AM UTC (customizable)
+- **Manual trigger:** Run anytime from Actions tab with optional parameters
+- **Automatic publishing:** New posts are committed and pushed automatically
+- **Error handling:** Smart checks for commit count and generation status
+
+### Manual Trigger Options
+
+You can manually run the workflow from the **Actions** tab with these options:
+
+- **lookback_days** (default: 7): Number of days to search for commits
+- **force_generate** (default: false): Generate post even with few commits
+
+**To manually trigger:**
+1. Go to **Actions** tab in your repository
+2. Select **"Automated Blog Post Generation"**
+3. Click **"Run workflow"**
+4. Adjust parameters if needed
+5. Click **"Run workflow"** button
 
 ### Required Repository Secrets
 
@@ -390,6 +422,70 @@ The Python scripts are designed to work seamlessly with both local development a
 - Check you're using the right provider in `config.yml`
 - Regenerate the API key if necessary
 
+### Monitoring Workflow Runs
+
+**View workflow status:**
+1. Go to the **Actions** tab in your repository
+2. Click on **"Automated Blog Post Generation"**
+3. See all workflow runs with status (success, failure, skipped)
+
+**Check workflow details:**
+- Click any workflow run to see detailed logs
+- Each step shows execution time and output
+- Failed steps are highlighted in red
+- Workflow summary shows key information (commits found, post generated, etc.)
+
+**Workflow outcomes:**
+
+✅ **Success:** New blog post generated and committed
+- Post file appears in `_posts/` directory
+- GitHub Pages automatically rebuilds site
+- New post visible within a few minutes
+
+⏭️ **Skipped:** No post generated
+- Fewer than 3 commits found (use `force_generate` to override)
+- No commits in the specified time period
+- Check workflow summary for details
+
+❌ **Failed:** Error during execution
+- Check step logs for error messages
+- Common causes: invalid API key, rate limiting, script errors
+- See "Troubleshooting Secrets" section above
+
+### Customizing the Workflow
+
+**Change schedule:**
+
+Edit `.github/workflows/auto-blog.yml` and modify the cron expression:
+
+```yaml
+schedule:
+  - cron: '0 9 * * 1'  # Weekly on Monday at 9 AM UTC
+```
+
+**Common schedules:**
+- Daily: `'0 9 * * *'` (9 AM UTC every day)
+- Weekly: `'0 9 * * 1'` (9 AM UTC every Monday)
+- Bi-weekly: `'0 9 * * 1/2'` (9 AM UTC every other Monday)
+- Monthly: `'0 9 1 * *'` (9 AM UTC on the 1st of each month)
+
+**Cron syntax:** `minute hour day-of-month month day-of-week`
+
+Use [crontab.guru](https://crontab.guru/) to create custom schedules.
+
+**Disable automatic runs:**
+
+To run only manually, remove or comment out the `schedule` section:
+
+```yaml
+# schedule:
+#   - cron: '0 9 * * 1'
+```
+
+**Change commit message:**
+
+Edit the "Commit and push new post" step in the workflow file to customize the commit message format.
+
 ## Project Structure
 
 ```
@@ -402,6 +498,10 @@ The Python scripts are designed to work seamlessly with both local development a
 ├── Gemfile                    # Ruby dependencies
 ├── Gemfile.lock               # Locked Ruby dependency versions
 ├── README.md                  # This file
+│
+├── .github/                   # GitHub configuration
+│   └── workflows/
+│       └── auto-blog.yml      # Automated blog generation workflow
 │
 ├── _layouts/                  # Jekyll templates
 │   ├── default.html           # Base layout with header/footer
