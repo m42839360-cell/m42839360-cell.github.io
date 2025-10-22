@@ -253,12 +253,142 @@ Run the entire workflow with a single command:
 
 ### GitHub Actions (Automated)
 
-The blog automatically generates posts based on the configured frequency:
-- Posts are created in `_posts/` directory
-- Committed and pushed to the repository
-- Published via GitHub Pages
+The blog can automatically generate posts using GitHub Actions. See the **GitHub Actions Setup** section below for configuration instructions.
 
-**Note:** GitHub Actions setup is covered in a separate section.
+## GitHub Actions Setup
+
+To enable automated blog post generation via GitHub Actions, you need to configure repository secrets.
+
+### Required Repository Secrets
+
+Navigate to your repository settings: **Settings → Secrets and variables → Actions → New repository secret**
+
+Add the following secrets:
+
+#### 1. LLM_API_KEY (Required)
+
+Your LLM provider API key for generating blog posts.
+
+- **Secret name:** `LLM_API_KEY`
+- **Secret value:** Your API key from one of these providers:
+  - **OpenAI:** Get from https://platform.openai.com/api-keys
+  - **Anthropic:** Get from https://console.anthropic.com/
+  - **OpenRouter:** Get from https://openrouter.ai/keys
+
+**Example:**
+```
+Name: LLM_API_KEY
+Value: sk-ant-api03-xxxxx...  (for Anthropic)
+       sk-xxxxx...             (for OpenAI)
+```
+
+#### 2. GITHUB_TOKEN (Optional, but Recommended)
+
+A Personal Access Token for fetching commits with higher rate limits.
+
+- **Secret name:** `GITHUB_TOKEN`
+- **Secret value:** Personal Access Token from https://github.com/settings/tokens
+- **Required scopes:**
+  - `public_repo` (for public repositories)
+  - `repo` (if you want to include private repositories)
+
+**Why add this?**
+- **Without token:** 60 requests/hour (may be insufficient for large commit history)
+- **With token:** 5,000 requests/hour (recommended for reliable automation)
+
+**Note:** GitHub Actions provides a default `GITHUB_TOKEN`, but it has restrictions. A Personal Access Token gives better access to your commit history.
+
+**Example:**
+```
+Name: GITHUB_TOKEN
+Value: ghp_xxxxx...
+```
+
+### Setting Up Secrets
+
+**Step-by-step instructions:**
+
+1. **Go to repository settings:**
+   ```
+   https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions
+   ```
+
+2. **Click "New repository secret"**
+
+3. **Add LLM_API_KEY:**
+   - Name: `LLM_API_KEY`
+   - Value: Your API key (paste without quotes)
+   - Click "Add secret"
+
+4. **Add GITHUB_TOKEN (optional but recommended):**
+   - Generate token: https://github.com/settings/tokens → "Generate new token (classic)"
+   - Select scopes: `public_repo` or `repo`
+   - Copy the generated token (starts with `ghp_`)
+   - Add as repository secret:
+     - Name: `GITHUB_TOKEN`
+     - Value: Your token (paste without quotes)
+   - Click "Add secret"
+
+### Verifying Secrets Configuration
+
+After adding secrets, you can verify they're configured correctly:
+
+1. **Check secrets list:**
+   - Go to: Settings → Secrets and variables → Actions
+   - You should see `LLM_API_KEY` and optionally `GITHUB_TOKEN` listed
+   - Secret values are hidden (you'll only see when they were last updated)
+
+2. **Test with workflow:**
+   - Once you set up the GitHub Actions workflow (task-12), it will use these secrets automatically
+   - Check workflow runs for any authentication errors
+
+### How Scripts Use Secrets
+
+The Python scripts are designed to work seamlessly with both local development and GitHub Actions:
+
+**Local development:**
+- Scripts read from `.env` file using `python-dotenv`
+- Create `.env` from `.env.example` template
+- Add your API keys to `.env` (never commit this file!)
+
+**GitHub Actions:**
+- Secrets are automatically exposed as environment variables
+- Scripts read from environment variables directly
+- No `.env` file needed in the repository
+- The `load_dotenv()` function does NOT override existing environment variables
+
+**Priority:** Environment variables (GitHub Actions) → `.env` file (local)
+
+### Security Best Practices
+
+✅ **DO:**
+- Add secrets via GitHub's repository settings UI
+- Use repository secrets (not environment secrets) for personal repos
+- Rotate API keys periodically
+- Use minimal required token scopes
+
+❌ **DON'T:**
+- Never commit `.env` file to git (it's in `.gitignore`)
+- Never hardcode API keys in scripts or config files
+- Never share secrets in issues, pull requests, or documentation
+- Don't use organization secrets unless necessary
+
+### Troubleshooting Secrets
+
+**Error:** `API key not found in environment variable: LLM_API_KEY`
+- Verify secret name is exactly `LLM_API_KEY` (case-sensitive)
+- Check the secret is added to repository secrets (not environment secrets)
+- Ensure workflow references the secret correctly in `env:` section
+
+**Error:** `GITHUB_TOKEN not found in environment`
+- This is just a warning - the script will use unauthenticated requests (60/hour limit)
+- Add `GITHUB_TOKEN` as repository secret to fix
+- Or ignore if you have low commit volume
+
+**Error:** `Invalid API key` or `401 Unauthorized`
+- Verify the API key is correct and active
+- Check you're using the right provider in `config.yml`
+- Regenerate the API key if necessary
 
 ## Project Structure
 
