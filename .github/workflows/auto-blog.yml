@@ -117,13 +117,10 @@ jobs:
 
           # Create commit message
           POST_FILENAME=$(basename "$NEW_POST_FILE")
-          git commit -m "Add automated blog post: $POST_FILENAME
-
-Generated from $COMMIT_COUNT commits using GitHub Actions.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git commit -m "Add automated blog post: $POST_FILENAME" \
+                     -m "Generated from $COMMIT_COUNT commits using GitHub Actions." \
+                     -m "🤖 Generated with [Claude Code](https://claude.com/claude-code)" \
+                     -m "Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
 
           # Push changes
           git push
