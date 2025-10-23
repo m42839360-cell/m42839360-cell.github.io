@@ -5,12 +5,13 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2025-10-20 08:20'
-updated_date: '2025-10-22 11:57'
+updated_date: '2025-10-23 07:18'
 labels:
   - security
   - github
 dependencies: []
 priority: high
+ordinal: 5000
 ---
 
 ## Description

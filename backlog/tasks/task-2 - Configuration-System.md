@@ -5,12 +5,13 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2025-10-20 08:20'
-updated_date: '2025-10-20 08:41'
+updated_date: '2025-10-23 07:18'
 labels:
   - config
   - setup
 dependencies: []
 priority: high
+ordinal: 15000
 ---
 
 ## Description

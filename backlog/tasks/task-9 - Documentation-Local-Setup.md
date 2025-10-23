@@ -5,11 +5,12 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2025-10-20 08:20'
-updated_date: '2025-10-20 09:31'
+updated_date: '2025-10-23 07:18'
 labels:
   - documentation
 dependencies: []
 priority: medium
+ordinal: 8000
 ---
 
 ## Description

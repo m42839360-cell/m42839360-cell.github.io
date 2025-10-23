@@ -5,13 +5,14 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2025-10-20 09:56'
-updated_date: '2025-10-20 09:59'
+updated_date: '2025-10-23 07:18'
 labels:
   - enhancement
   - error-handling
   - github-api
 dependencies: []
 priority: high
+ordinal: 7000
 ---
 
 ## Description
