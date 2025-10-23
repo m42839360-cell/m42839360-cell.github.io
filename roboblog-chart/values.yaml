@@ -4,9 +4,9 @@
 
 # Image configuration for Jekyll builder
 image:
-  repository: roboblog
+  repository: registry.gitlab.com/maluma/m42839360-cell.github.io
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "v1.0.0"
 
 imagePullSecrets: []
 nameOverride: ""
