@@ -22,7 +22,7 @@ docker-fetch:
     docker run -v $(pwd)/.env:/app/.env -v $(pwd)/data:/app/data blog-automation:latest fetch
 
 docker-generate:
-    docker run -v $(pwd)/data:/app/data -v $(pwd)/_posts:/app/_posts blog-automation:latest generate
+    docker run -v $(pwd)/.env:/app/.env -v $(pwd)/data:/app/data -v $(pwd)/_posts:/app/_posts blog-automation:latest generate
 
 docker-help:
     docker run blog-automation:latest

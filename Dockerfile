@@ -48,8 +48,10 @@ COPY assets/ ./assets/
 
 # Copy automation scripts and config
 COPY config.yml .
-COPY .env.example .env
 COPY scripts/ scripts/
+
+# Note: .env should be mounted at runtime via volume (-v $(pwd)/.env:/app/.env)
+# to avoid baking secrets into the image
 
 # Create data directory
 RUN mkdir -p data
