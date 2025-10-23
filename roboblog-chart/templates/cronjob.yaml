@@ -1,0 +1,54 @@
+{{- if .Values.cronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "roboblog.fullname" . }}-builder
+  labels:
+    {{- include "roboblog.labels" . | nindent 4 }}
+    app.kubernetes.io/component: builder
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit }}
+  concurrencyPolicy: {{ .Values.cronjob.concurrencyPolicy }}
+  jobTemplate:
+    metadata:
+      labels:
+        {{- include "roboblog.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: builder
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "roboblog.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: builder
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy }}
+          containers:
+          - name: jekyll-builder
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command:
+            - /bin/bash
+            - -c
+            - |
+              # Build Jekyll site
+              bundle exec jekyll build --destination /tmp/_site
+              # Copy built site to shared volume
+              rm -rf /site/_site/*
+              cp -r /tmp/_site/* /site/_site/
+              echo "Build completed at $(date)"
+            volumeMounts:
+            - name: site-volume
+              mountPath: /site
+            resources:
+              {{- toYaml .Values.cronjob.resources | nindent 14 }}
+          volumes:
+          - name: site-volume
+            persistentVolumeClaim:
+              claimName: {{ include "roboblog.fullname" . }}-site
+{{- end }}
