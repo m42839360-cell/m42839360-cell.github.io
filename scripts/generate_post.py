@@ -1,11 +1,9 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # dependencies = [
-#   "requests>=2.31.0",
 #   "pyyaml>=6.0.0",
 #   "python-dotenv>=1.0.0",
-#   "openai>=1.0.0",
-#   "anthropic>=0.18.0",
+#   "dspy-ai>=2.4.0",
 # ]
 # requires-python = ">=3.11"
 # ///
@@ -26,6 +24,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 from dotenv import load_dotenv
+import dspy
 
 
 class CommitDataLoader:
@@ -93,6 +92,22 @@ class CommitDataLoader:
         return "\n".join(lines)
 
 
+class BlogPostSignature(dspy.Signature):
+    """Generate a structured blog post from development activity data.
+
+    The blog post should have a compelling headline and comprehensive summary
+    of the development work, written in the specified style.
+    """
+
+    commit_summary: str = dspy.InputField(desc="Summary of git commits and development activity")
+    style_instruction: str = dspy.InputField(desc="Writing style and tone to use")
+    include_code: bool = dspy.InputField(desc="Whether to include code snippets")
+    include_stats: bool = dspy.InputField(desc="Whether to include statistics")
+
+    headline: str = dspy.OutputField(desc="Catchy, descriptive blog post title (without # markdown)")
+    summary: str = dspy.OutputField(desc="Complete blog post body content in markdown format")
+
+
 class LLMConfig:
     """Manages LLM configuration from config.yml and environment."""
 
@@ -154,153 +169,60 @@ class LLMConfig:
         """Get automation configuration."""
         return self.config.get("automation", {})
 
+    def create_dspy_lm(self) -> "dspy.LM":
+        """Create and return a configured DSPy LM instance.
 
-class LLMClient:
-    """Base class for LLM API clients."""
+        Returns:
+            Configured dspy.LM instance ready to use
+        """
+        provider = self.get_provider()
+        model = self.get_model()
+        max_tokens = self.get_max_tokens()
+        temperature = self.get_temperature()
 
-    def generate(self, prompt: str) -> str:
-        """Generate text from prompt."""
-        raise NotImplementedError
-
-
-class OpenAIClient(LLMClient):
-    """OpenAI API client."""
-
-    def __init__(self, api_key: str, model: str, max_tokens: int, temperature: float):
-        from openai import OpenAI
-
-        self.client = OpenAI(api_key=api_key)
-        self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-
-    def generate(self, prompt: str) -> str:
-        """Generate text using OpenAI API."""
-        # Newer models (gpt-4o, gpt-4o-mini, etc.) use max_completion_tokens
-        # Older models (gpt-4, gpt-3.5-turbo) use max_tokens
-        kwargs = {
-            "model": self.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": self.temperature,
-        }
-
-        # Use max_completion_tokens for newer models, max_tokens for older ones
-        if "gpt-4o" in self.model or "gpt-5" in self.model:
-            kwargs["max_completion_tokens"] = self.max_tokens
+        if provider == "openai":
+            return dspy.LM(
+                f"openai/{model}",
+                api_key=self.api_key,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        elif provider == "anthropic":
+            return dspy.LM(
+                f"anthropic/{model}",
+                api_key=self.api_key,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        elif provider == "ollama":
+            return dspy.LM(
+                f"ollama/{model}",
+                api_base="http://localhost:11434",
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        elif provider == "openrouter":
+            return dspy.LM(
+                model,
+                api_key=self.api_key,
+                api_base="https://openrouter.ai/api/v1",
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
         else:
-            kwargs["max_tokens"] = self.max_tokens
-
-        response = self.client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content
-
-
-class AnthropicClient(LLMClient):
-    """Anthropic API client."""
-
-    def __init__(self, api_key: str, model: str, max_tokens: int, temperature: float):
-        from anthropic import Anthropic
-
-        self.client = Anthropic(api_key=api_key)
-        self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-
-    def generate(self, prompt: str) -> str:
-        """Generate text using Anthropic API."""
-        message = self.client.messages.create(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text
-
-
-class OllamaClient(LLMClient):
-    """Ollama API client (local)."""
-
-    def __init__(
-        self,
-        model: str,
-        max_tokens: int,
-        temperature: float,
-        base_url: str = "http://localhost:11434",
-    ):
-        import requests
-
-        self.session = requests.Session()
-        self.base_url = base_url
-        self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-
-    def generate(self, prompt: str) -> str:
-        """Generate text using Ollama API."""
-        url = f"{self.base_url}/api/generate"
-        payload = {
-            "model": self.model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": self.temperature,
-                "num_predict": self.max_tokens,
-            },
-        }
-
-        response = self.session.post(url, json=payload)
-        if response.status_code != 200:
-            raise Exception(
-                f"Ollama API error: {response.status_code} - {response.text}"
-            )
-
-        return response.json().get("response", "")
-
-
-class OpenRouterClient(LLMClient):
-    """OpenRouter API client."""
-
-    def __init__(self, api_key: str, model: str, max_tokens: int, temperature: float):
-        import requests
-
-        self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-        )
-        self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
-
-    def generate(self, prompt: str) -> str:
-        """Generate text using OpenRouter API."""
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        payload = {
-            "model": self.model,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": self.max_tokens,
-            "temperature": self.temperature,
-        }
-
-        response = self.session.post(url, json=payload)
-        if response.status_code != 200:
-            raise Exception(
-                f"OpenRouter API error: {response.status_code} - {response.text}"
-            )
-
-        return response.json()["choices"][0]["message"]["content"]
+            raise ValueError(f"Unsupported LLM provider: {provider}")
 
 
 class PromptBuilder:
-    """Builds prompts for LLM based on commit data and configuration."""
+    """Builds structured prompts for LLM using DSPy signatures."""
 
     def __init__(self, article_style: str, blog_config: Dict[str, Any]):
         self.article_style = article_style
         self.blog_config = blog_config
+        self.predictor = dspy.ChainOfThought(BlogPostSignature)
 
-    def build(self, commit_summary: str) -> str:
-        """Build prompt for LLM."""
+    def build_style_instruction(self) -> str:
+        """Build style instruction based on article style."""
         style_descriptions = {
             "technical": "Write in a technical, detailed style with code examples and technical terminology.",
             "casual": "Write in a casual, conversational tone that's easy to read.",
@@ -310,7 +232,7 @@ class PromptBuilder:
             "story": "Write in a narrative, story-telling style that engages readers.",
         }
 
-        style_instruction = style_descriptions.get(
+        base_instruction = style_descriptions.get(
             self.article_style,
             "Write in a professional, informative style.",
         )
@@ -318,30 +240,38 @@ class PromptBuilder:
         include_code = self.blog_config.get("include_code_snippets", True)
         include_stats = self.blog_config.get("include_stats", True)
 
-        prompt = f"""You are a technical writer. Generate a summary based on the following development activity.
+        additional = []
+        if include_code:
+            additional.append("Include relevant code snippets where appropriate.")
+        if include_stats:
+            additional.append("Include statistics about changes (lines added/removed, files changed).")
 
-{style_instruction}
+        additional.append("Group related changes together logically.")
+        additional.append("Use only information from commit messages, don't guess implementation details.")
 
-IMPORTANT FORMATTING REQUIREMENTS:
-- Write ONLY the blog post content (title and body)
-- DO NOT include Jekyll frontmatter (no --- delimiters, no YAML metadata)
-- Start with a markdown heading (# Title)
-- Use proper markdown formatting
+        return base_instruction + " " + " ".join(additional)
 
-CONTENT GUIDELINES:
-- Create a descriptive title that reflects the work done
-- Group related changes together logically
-- Don't try to guess the actual implementation, use only the information available (mainly the commit messages)
-{"- Include relevant code snippets where appropriate" if include_code else ""}
-{"- Include statistics about the changes (lines added/removed, files changed)" if include_stats else ""}
+    def generate(self, commit_summary: str) -> Dict[str, str]:
+        """Generate structured blog post using DSPy.
 
-DEVELOPMENT ACTIVITY:
+        Returns:
+            Dictionary with 'headline' and 'summary' keys
+        """
+        style_instruction = self.build_style_instruction()
+        include_code = self.blog_config.get("include_code_snippets", True)
+        include_stats = self.blog_config.get("include_stats", True)
 
-{commit_summary}
+        result = self.predictor(
+            commit_summary=commit_summary,
+            style_instruction=style_instruction,
+            include_code=include_code,
+            include_stats=include_stats,
+        )
 
-Now write the blog post:"""
-
-        return prompt
+        return {
+            "headline": result.headline,
+            "summary": result.summary,
+        }
 
 
 class JekyllPostGenerator:
@@ -350,19 +280,17 @@ class JekyllPostGenerator:
     def __init__(self, blog_config: Dict[str, Any]):
         self.blog_config = blog_config
 
-    def generate(self, llm_content: str) -> str:
-        """Generate complete Jekyll post with frontmatter."""
-        # Extract title from LLM content (first # heading)
-        title_match = re.search(r"^#\s+(.+)$", llm_content, re.MULTILINE)
-        if title_match:
-            title = title_match.group(1).strip()
-            # Remove the title from content since it will be in frontmatter
-            content = re.sub(
-                r"^#\s+.+$\n?", "", llm_content, count=1, flags=re.MULTILINE
-            )
-        else:
-            title = "Development Update"
-            content = llm_content
+    def generate(self, structured_content: Dict[str, str]) -> str:
+        """Generate complete Jekyll post with frontmatter from structured content.
+
+        Args:
+            structured_content: Dictionary with 'headline' and 'summary' keys
+
+        Returns:
+            Complete Jekyll post with frontmatter
+        """
+        title = structured_content.get("headline", "Development Update")
+        content = structured_content.get("summary", "")
 
         # Generate frontmatter
         now = datetime.now(timezone.utc)
@@ -477,7 +405,7 @@ def main():
 
         print(f"  Found {commit_data.get('total_commits')} commits")
 
-        # Load LLM configuration
+        # Load LLM configuration and configure DSPy
         print("\n[2/6] Loading LLM configuration...")
         llm_config = LLMConfig(config_path=args.config)
         llm_config.load()
@@ -487,56 +415,32 @@ def main():
         print(f"  Provider: {provider}")
         print(f"  Model: {model}")
 
-        # Create LLM client
-        print("\n[3/6] Initializing LLM client...")
-        if provider == "openai":
-            client = OpenAIClient(
-                api_key=llm_config.api_key,
-                model=model,
-                max_tokens=llm_config.get_max_tokens(),
-                temperature=llm_config.get_temperature(),
-            )
-        elif provider == "anthropic":
-            client = AnthropicClient(
-                api_key=llm_config.api_key,
-                model=model,
-                max_tokens=llm_config.get_max_tokens(),
-                temperature=llm_config.get_temperature(),
-            )
-        elif provider == "ollama":
-            client = OllamaClient(
-                model=model,
-                max_tokens=llm_config.get_max_tokens(),
-                temperature=llm_config.get_temperature(),
-            )
-        elif provider == "openrouter":
-            client = OpenRouterClient(
-                api_key=llm_config.api_key,
-                model=model,
-                max_tokens=llm_config.get_max_tokens(),
-                temperature=llm_config.get_temperature(),
-            )
-        else:
-            raise ValueError(f"Unsupported LLM provider: {provider}")
+        # Configure DSPy with the LLM
+        print("\n[3/6] Configuring DSPy...")
+        lm = llm_config.create_dspy_lm()
+        dspy.configure(lm=lm)
+        print(f"  ✓ DSPy configured with {provider}/{model}")
 
-        # Build prompt
-        print("\n[4/6] Building prompt...")
+        # Build structured prompt with DSPy
+        print("\n[4/6] Initializing DSPy prompt builder...")
         prompt_builder = PromptBuilder(
             article_style=llm_config.get_article_style(),
             blog_config=llm_config.get_blog_config(),
         )
-        prompt = prompt_builder.build(commit_summary)
+        print("  ✓ Prompt builder ready")
 
-        # Generate content
-        print("\n[5/6] Generating blog post with LLM...")
+        # Generate structured content
+        print("\n[5/6] Generating structured blog post with DSPy...")
         print("  (This may take a moment...)")
-        llm_content = client.generate(prompt)
+        structured_content = prompt_builder.generate(commit_summary)
         print("  ✓ Content generated")
+        print(f"  - Headline: {structured_content['headline'][:60]}...")
+        print(f"  - Summary length: {len(structured_content['summary'])} chars")
 
         # Generate Jekyll post
         print("\n[6/6] Creating Jekyll post...")
         post_generator = JekyllPostGenerator(blog_config=llm_config.get_blog_config())
-        post_content = post_generator.generate(llm_content)
+        post_content = post_generator.generate(structured_content)
         filename = post_generator.get_filename(post_content)
 
         if args.preview:
