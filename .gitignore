@@ -32,3 +32,6 @@ Thumbs.db
 # Blog automation runtime files
 # Note: .last_build is tracked in git for GitHub Actions timestamp persistence
 data/commits.json
+
+# python
+*.pyc
