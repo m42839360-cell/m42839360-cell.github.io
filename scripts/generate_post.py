@@ -318,7 +318,7 @@ class PromptBuilder:
         include_code = self.blog_config.get("include_code_snippets", True)
         include_stats = self.blog_config.get("include_stats", True)
 
-        prompt = f"""You are a technical blog post writer. Generate a blog post based on the following development activity.
+        prompt = f"""You are a technical writer. Generate a summary based on the following development activity.
 
 {style_instruction}
 
@@ -327,17 +327,13 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - DO NOT include Jekyll frontmatter (no --- delimiters, no YAML metadata)
 - Start with a markdown heading (# Title)
 - Use proper markdown formatting
-- Make the content engaging and informative
-- Focus on the "why" and "what" rather than just listing commits
 
 CONTENT GUIDELINES:
-- Create a catchy, descriptive title that reflects the work done
-- Write an engaging introduction paragraph
+- Create a descriptive title that reflects the work done
 - Group related changes together logically
-- Explain the impact and purpose of the changes
+- Don't try to guess the actual implementation, use only the information available (mainly the commit messages)
 {"- Include relevant code snippets where appropriate" if include_code else ""}
 {"- Include statistics about the changes (lines added/removed, files changed)" if include_stats else ""}
-- End with a conclusion or next steps section
 
 DEVELOPMENT ACTIVITY:
 
