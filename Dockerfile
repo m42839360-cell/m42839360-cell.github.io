@@ -48,8 +48,8 @@ COPY _includes/ ./_includes/
 COPY index.html ./
 COPY assets/ ./assets/
 
-# Copy automation scripts and config
-COPY config.yml .
+# Copy automation scripts
+# Note: config.yml is NOT copied - it's provided at runtime via ConfigMap
 COPY scripts/ scripts/
 
 # Note: Environment variables (GITHUB_TOKEN, etc.) are injected at runtime via Kubernetes secrets

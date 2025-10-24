@@ -52,10 +52,17 @@ spec:
             - name: site-volume
               mountPath: /app/.last_build
               subPath: .last_build
+            - name: config-volume
+              mountPath: /app/config.yml
+              subPath: config.yml
+              readOnly: true
             resources:
               {{- toYaml .Values.cronjob.resources | nindent 14 }}
           volumes:
           - name: site-volume
             persistentVolumeClaim:
               claimName: {{ include "roboblog.fullname" . }}-site
+          - name: config-volume
+            configMap:
+              name: {{ include "roboblog.fullname" . }}-config
 {{- end }}
