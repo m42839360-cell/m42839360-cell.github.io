@@ -2,11 +2,25 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# Image configuration for Jekyll builder
+# Image configuration for blog automation
 image:
   repository: registry.gitlab.com/maluma/m42839360-cell.github.io
   pullPolicy: IfNotPresent
   tag: "v1.0.0"
+
+# Secrets configuration
+# IMPORTANT: Override these values in a separate values file (e.g., secrets.yaml)
+# Never commit actual secrets to git!
+secrets:
+  enabled: true
+  # GitHub Personal Access Token for fetching commits
+  # Generate at: https://github.com/settings/tokens
+  # Required scopes: repo (for private repos) or public_repo (for public only)
+  githubToken: ""  # Set via --set secrets.githubToken=<token> or separate values file
+  # Additional environment variables can be added here
+  extra: {}
+    # Example:
+    # API_KEY: "your-api-key"
 
 imagePullSecrets: [
   name: image-pull-secret
@@ -22,10 +36,11 @@ persistence:
   size: 1Gi
   annotations: {}
 
-# CronJob configuration for Jekyll build
+# CronJob configuration for blog automation
+# Runs: fetch commits -> generate posts -> build Jekyll site
 cronjob:
   enabled: true
-  schedule: "0 * * * *"  # Build every hour
+  schedule: "0 * * * *"  # Run automation every hour
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   concurrencyPolicy: Forbid

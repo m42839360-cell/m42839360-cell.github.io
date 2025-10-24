@@ -1,7 +1,9 @@
-# Dockerfile for blog automation and Jekyll server
-# This container runs:
-# - fetch_commits.py and generate_post.py using uv
-# - Jekyll server for blog serving
+# Dockerfile for blog automation
+# This container runs the complete blog update workflow:
+# - Fetches commits from GitHub
+# - Generates blog posts
+# - Builds Jekyll static site
+# The built site is served by a separate nginx container
 
 FROM ruby:3.3-slim
 
@@ -38,11 +40,11 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-# Copy Jekyll configuration and content
+# Copy Jekyll configuration and static content
+# Note: _posts/ is NOT copied - it's generated dynamically and stored on volume
 COPY _config.yml ./
 COPY _layouts/ ./_layouts/
 COPY _includes/ ./_includes/
-COPY _posts/ ./_posts/
 COPY index.html ./
 COPY assets/ ./assets/
 
@@ -50,39 +52,12 @@ COPY assets/ ./assets/
 COPY config.yml .
 COPY scripts/ scripts/
 
-# Note: .env should be mounted at runtime via volume (-v $(pwd)/.env:/app/.env)
-# to avoid baking secrets into the image
+# Note: Environment variables (GITHUB_TOKEN, etc.) are injected at runtime via Kubernetes secrets
+# Note: Persistent data (data/, _posts/, _site/, .last_build) stored on mounted volumes
 
-# Create data directory
-RUN mkdir -p data
+# Create directories that will be volume mount points
+RUN mkdir -p data _posts _site
 
-# Expose Jekyll default port
-EXPOSE 4000
-
-# Create entrypoint script
-RUN echo '#!/bin/bash\n\
-if [ "$1" = "serve" ]; then\n\
-    echo "Starting Jekyll server..."\n\
-    exec bundle exec jekyll serve --host 0.0.0.0\n\
-elif [ "$1" = "fetch" ]; then\n\
-    shift\n\
-    exec uv run scripts/fetch_commits.py "$@"\n\
-elif [ "$1" = "generate" ]; then\n\
-    shift\n\
-    exec uv run scripts/generate_post.py "$@"\n\
-else\n\
-    echo "Blog Automation & Jekyll Server Container"\n\
-    echo ""\n\
-    echo "Available commands:"\n\
-    echo "  serve                    - Start Jekyll server (port 4000)"\n\
-    echo "  fetch [options]          - Run fetch_commits.py"\n\
-    echo "  generate [options]       - Run generate_post.py"\n\
-    echo ""\n\
-    echo "Examples:"\n\
-    echo "  docker run -p 4000:4000 <image> serve"\n\
-    echo "  docker run -v \$(pwd)/.env:/app/.env -v \$(pwd)/data:/app/data <image> fetch"\n\
-    echo "  docker run -v \$(pwd)/data:/app/data -v \$(pwd)/_posts:/app/_posts <image> generate"\n\
-fi\n' > /entrypoint.sh && chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["help"]
+# Default entrypoint runs the complete automation workflow
+ENTRYPOINT ["scripts/run_blog_update.py"]
+CMD []

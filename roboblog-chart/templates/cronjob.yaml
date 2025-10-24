@@ -29,22 +29,29 @@ spec:
           {{- end }}
           restartPolicy: {{ .Values.cronjob.restartPolicy }}
           containers:
-          - name: jekyll-builder
+          - name: blog-automation
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
-            command:
-            - /bin/bash
-            - -c
-            - |
-              # Build Jekyll site
-              bundle exec jekyll build --destination /tmp/_site
-              # Copy built site to shared volume
-              rm -rf /site/_site/*
-              cp -r /tmp/_site/* /site/_site/
-              echo "Build completed at $(date)"
+            # Entrypoint is scripts/run_blog_update.py by default
+            # No command needed - uses Dockerfile ENTRYPOINT
+            {{- if .Values.secrets.enabled }}
+            envFrom:
+            - secretRef:
+                name: {{ include "roboblog.fullname" . }}-secrets
+            {{- end }}
             volumeMounts:
             - name: site-volume
-              mountPath: /site
+              mountPath: /app/data
+              subPath: data
+            - name: site-volume
+              mountPath: /app/_posts
+              subPath: _posts
+            - name: site-volume
+              mountPath: /app/_site
+              subPath: _site
+            - name: site-volume
+              mountPath: /app/.last_build
+              subPath: .last_build
             resources:
               {{- toYaml .Values.cronjob.resources | nindent 14 }}
           volumes:
