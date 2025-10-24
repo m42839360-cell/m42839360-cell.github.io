@@ -250,13 +250,24 @@ class GitHubAPIClient:
         per_page = 100
 
         while True:
-            url = f"{self.BASE_URL}/users/{username}/repos"
-            params = {
-                "per_page": per_page,
-                "page": page,
-                "sort": "pushed",  # Most recently pushed first
-                "type": "owner",  # Only repos owned by the user
-            }
+            # Use authenticated endpoint if token is available to get private repos
+            if self.token:
+                url = f"{self.BASE_URL}/user/repos"
+                params = {
+                    "per_page": per_page,
+                    "page": page,
+                    "sort": "pushed",  # Most recently pushed first
+                    "affiliation": "owner",  # Only repos owned by the user
+                    "visibility": "all",  # Include both public and private
+                }
+            else:
+                url = f"{self.BASE_URL}/users/{username}/repos"
+                params = {
+                    "per_page": per_page,
+                    "page": page,
+                    "sort": "pushed",  # Most recently pushed first
+                    "type": "owner",  # Only repos owned by the user
+                }
 
             try:
                 response = self.session.get(url, params=params, timeout=10)
