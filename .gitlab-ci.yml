@@ -1,0 +1,7 @@
+include:
+  - project: 'maluma/gitlab-ci'
+    ref: main
+    file: 'docker.yml'
+
+variables:
+  WORK_DIR: "$CI_PROJECT_DIR"
