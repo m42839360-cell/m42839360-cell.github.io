@@ -44,7 +44,6 @@ RUN bundle install
 # Note: _posts/ is NOT copied - it's generated dynamically and stored on volume
 COPY _config.yml ./
 COPY _layouts/ ./_layouts/
-COPY _includes/ ./_includes/
 COPY index.html ./
 COPY assets/ ./assets/
 
