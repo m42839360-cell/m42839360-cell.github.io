@@ -48,6 +48,8 @@ class WorkflowOrchestrator:
         self.dry_run = dry_run
         self.skip_build = skip_build
         self.scripts_dir = Path("scripts")
+        self.work_dir = Path()
+        self.default_build_path = Path("_site")
 
     def print_step(self, step: int, total: int, message: str) -> None:
         """Print a step header."""
@@ -233,7 +235,7 @@ class WorkflowOrchestrator:
             self.print_warning("Gemfile not found, skipping Jekyll build")
             return True
 
-        command = ["bundle", "exec", "jekyll", "build"]
+        command = ["bundle", "exec", "jekyll", "build", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', self.default_build_path)]
 
         success, stdout, stderr = self.run_command(
             command, "Building Jekyll site", capture_output=True
