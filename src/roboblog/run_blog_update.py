@@ -208,7 +208,7 @@ class WorkflowOrchestrator:
 
     def step_sync_jekyll_config(self) -> bool:
         """Step 4: Sync Jekyll configuration from config.yml."""
-        self.print_step(4, 5, "Syncing Jekyll configuration")
+        self.print_step(4, 6, "Syncing Jekyll configuration")
 
         # Use uv run to execute the sync command
         command = [
@@ -234,9 +234,44 @@ class WorkflowOrchestrator:
                 print(stderr)
             return False
 
+    def step_process_human_posts(self) -> bool:
+        """Step 5: Process human-written posts and add frontmatter."""
+        self.print_step(5, 6, "Processing human-written posts")
+
+        # Use uv run to execute the process-human-posts command
+        command = [
+            "uv",
+            "run",
+            "process-human-posts",
+            "--posts-dir",
+            "jekyll/_posts",
+        ]
+
+        if self.dry_run:
+            command.append("--dry-run")
+
+        success, stdout, stderr = self.run_command(
+            command, "Processing human posts", capture_output=True
+        )
+
+        if success:
+            # Print relevant output
+            for line in stdout.split("\n"):
+                if "Processing:" in line or "Processed:" in line or "Complete!" in line:
+                    print(f"  {line}")
+            return True
+        else:
+            # This is not a critical failure - continue even if processing fails
+            self.print_warning("Human post processing had issues (continuing anyway)")
+            if stdout:
+                print(stdout)
+            if stderr:
+                print(stderr)
+            return True  # Continue workflow
+
     def step_build_jekyll(self) -> bool:
-        """Step 5: Build Jekyll site."""
-        self.print_step(5, 5, "Building Jekyll site")
+        """Step 6: Build Jekyll site."""
+        self.print_step(6, 6, "Building Jekyll site")
 
         if self.skip_build:
             self.print_info("Skipping Jekyll build (--skip-build flag)")
@@ -346,7 +381,12 @@ class WorkflowOrchestrator:
                 self.print_error("Failed to sync Jekyll configuration")
                 return 1
 
-            # Step 5: Build Jekyll site
+            # Step 5: Process human-written posts
+            if not self.step_process_human_posts():
+                self.print_error("Failed to process human posts")
+                return 1
+
+            # Step 6: Build Jekyll site
             if not self.step_build_jekyll():
                 self.print_error("Failed to build Jekyll site")
                 return 1

@@ -1,3 +1,11 @@
+---
+layout: post
+title: "Welcome to Human Posts!"
+date: 2025-11-13 14:50:58 +0100
+categories: blog
+author_type: human
+---
+
 # Welcome to Human Posts!
 
 This is an example of a human-written blog post. Unlike the AI-generated posts that are automatically created from GitHub commits, this post was written by a human.

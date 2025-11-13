@@ -41,6 +41,7 @@ title: Archive
                 {{ post.date | date: "%b %d" }}
             </time>
             <a href="{{ post.url | relative_url }}" class="archive-link">
+                {% if post.author_type == "human" %}👤{% else %}🤖{% endif %}
                 {{ post.title }}
             </a>
             {% if post.categories %}

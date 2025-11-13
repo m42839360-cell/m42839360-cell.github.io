@@ -308,6 +308,7 @@ title: "{title}"
 date: {now.strftime("%Y-%m-%d %H:%M:%S %z")}
 categories: {" ".join(default_tags)}
 author: {self.author}
+author_type: ai
 ---
 
 """

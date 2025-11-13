@@ -16,6 +16,7 @@ dependencies = [
 fetch-commits = "roboblog.fetch_commits:main"
 generate-post = "roboblog.generate_post:main"
 sync-jekyll-config = "roboblog.sync_jekyll_config:main"
+process-human-posts = "roboblog.process_human_posts:main"
 run-blog-update = "roboblog.run_blog_update:main"
 
 [project.optional-dependencies]

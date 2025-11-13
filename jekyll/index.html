@@ -69,7 +69,10 @@ title: Home
                 <article class="post-preview">
                     <header class="post-preview-header">
                         <h3>
-                            <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+                            <a href="{{ post.url | relative_url }}">
+                                {% if post.author_type == "human" %}👤{% else %}🤖{% endif %}
+                                {{ post.title }}
+                            </a>
                         </h3>
                         <div class="post-preview-meta">
                             <time datetime="{{ post.date | date_to_xmlschema }}">
