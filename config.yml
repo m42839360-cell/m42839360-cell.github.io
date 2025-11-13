@@ -66,6 +66,13 @@ automation:
   # Posts will say there were no updates for the previous day
   enable_no_update_posts: false
 
+  # Example Mode - Use mock data instead of fetching from GitHub
+  # Useful for testing, demos, and development without API calls
+  example_mode: false
+
+  # Path to example commit data file (relative to project root)
+  example_data_path: "data/example_commits.json"
+
 # Blog Post Settings
 blog:
   # Post title template

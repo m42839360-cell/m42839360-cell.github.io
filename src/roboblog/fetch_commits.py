@@ -66,6 +66,14 @@ class ConfigReader:
         """Get list of repositories to exclude."""
         return self.config.get("github", {}).get("exclude_repos", [])
 
+    def get_example_mode(self) -> bool:
+        """Check if example mode is enabled."""
+        return self.config.get("automation", {}).get("example_mode", False)
+
+    def get_example_data_path(self) -> str:
+        """Get path to example commit data file."""
+        return self.config.get("automation", {}).get("example_data_path", "data/example_commits.json")
+
 
 class TimestampTracker:
     """Manages the .last_build file for tracking last run timestamp."""
@@ -610,6 +618,30 @@ class CommitProcessor:
         print(f"  Total commits collected: {len(commits)}")
         return commits
 
+    def load_example_commits(self, example_data_path: str) -> List[Dict[str, Any]]:
+        """Load commits from example data file instead of fetching from GitHub."""
+        print(f"  Loading example commits from {example_data_path}...")
+
+        example_path = Path(example_data_path)
+        if not example_path.exists():
+            raise FileNotFoundError(f"Example data file not found: {example_data_path}")
+
+        with open(example_path, "r") as f:
+            example_data = json.load(f)
+
+        # Flatten commits from all repositories
+        commits = []
+        repositories = example_data.get("repositories", {})
+
+        for repo_name, repo_commits in repositories.items():
+            for commit in repo_commits:
+                # Apply filters just like we do with real commits
+                if not self._should_exclude_repo(repo_name):
+                    commits.append(commit)
+
+        print(f"  Loaded {len(commits)} example commits from {len(repositories)} repositories")
+        return commits
+
     def group_by_repository(
         self, commits: List[Dict[str, Any]]
     ) -> Dict[str, List[Dict[str, Any]]]:
@@ -644,6 +676,11 @@ def main():
         "--output",
         default="data/commits.json",
         help="Output file path (default: data/commits.json)",
+    )
+    parser.add_argument(
+        "--example",
+        action="store_true",
+        help="Use example commit data instead of fetching from GitHub",
     )
 
     args = parser.parse_args()
@@ -680,24 +717,41 @@ def main():
 
         print(f"  Fetching commits since: {since.isoformat()}")
 
-        # Fetch commits
-        print("\n[3/5] Fetching commits from GitHub...")
-        api_client = GitHubAPIClient(token=config.github_token)
+        # Check if example mode is enabled (CLI flag overrides config)
+        example_mode = args.example or config.get_example_mode()
 
-        # Validate token before proceeding
-        if not api_client.validate_token():
-            print("✗ Cannot proceed with invalid GitHub token")
-            sys.exit(1)
+        if example_mode:
+            print("\n⚡ EXAMPLE MODE ENABLED - Using mock data instead of GitHub API")
+            print("\n[3/5] Loading example commits...")
 
-        # Process commits using Commits API (more reliable than Events API)
-        print("\n[4/5] Processing commits...")
-        processor = CommitProcessor(
-            since=since,
-            repo_filters=config.get_repo_filters(),
-            exclude_repos=config.get_exclude_repos(),
-        )
-        commits = processor.fetch_commits_direct(api_client, username)
-        print(f"  Found {len(commits)} commits")
+            # Process commits using example data
+            print("\n[4/5] Processing commits...")
+            processor = CommitProcessor(
+                since=since,
+                repo_filters=config.get_repo_filters(),
+                exclude_repos=config.get_exclude_repos(),
+            )
+            commits = processor.load_example_commits(config.get_example_data_path())
+            print(f"  Found {len(commits)} commits")
+        else:
+            # Fetch commits from GitHub
+            print("\n[3/5] Fetching commits from GitHub...")
+            api_client = GitHubAPIClient(token=config.github_token)
+
+            # Validate token before proceeding
+            if not api_client.validate_token():
+                print("✗ Cannot proceed with invalid GitHub token")
+                sys.exit(1)
+
+            # Process commits using Commits API (more reliable than Events API)
+            print("\n[4/5] Processing commits...")
+            processor = CommitProcessor(
+                since=since,
+                repo_filters=config.get_repo_filters(),
+                exclude_repos=config.get_exclude_repos(),
+            )
+            commits = processor.fetch_commits_direct(api_client, username)
+            print(f"  Found {len(commits)} commits")
 
         # Group by repository
         grouped_commits = processor.group_by_repository(commits)

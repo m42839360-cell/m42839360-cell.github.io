@@ -36,10 +36,12 @@ class WorkflowOrchestrator:
         config_path: str = "config.yml",
         dry_run: bool = False,
         skip_build: bool = False,
+        example_mode: bool = False,
     ):
         self.config_path = Path(config_path)
         self.dry_run = dry_run
         self.skip_build = skip_build
+        self.example_mode = example_mode
         self.scripts_dir = Path("scripts")
         self.work_dir = Path()
         self.default_build_path = Path("jekyll/_site")
@@ -121,16 +123,17 @@ class WorkflowOrchestrator:
 
     def step_fetch_commits(self) -> bool:
         """Step 1: Fetch commits from GitHub."""
-        self.print_step(1, 4, "Fetching commits from GitHub")
+        if self.example_mode:
+            self.print_step(1, 4, "Loading example commits")
+        else:
+            self.print_step(1, 4, "Fetching commits from GitHub")
 
-        fetch_script = self.scripts_dir / "fetch_commits.py"
-        if not fetch_script.exists():
-            self.print_error(f"Script not found: {fetch_script}")
-            return False
-
-        command = [str(fetch_script), "--config", str(self.config_path)]
+        # Use uv run to execute the fetch-commits command
+        command = ["uv", "run", "fetch-commits", "--config", str(self.config_path)]
         if self.dry_run:
             command.append("--dry-run")
+        if self.example_mode:
+            command.append("--example")
 
         success, stdout, stderr = self.run_command(
             command, "Running fetch_commits.py", capture_output=True
@@ -172,13 +175,11 @@ class WorkflowOrchestrator:
         """Step 3: Generate blog post from commits."""
         self.print_step(3, 4, "Generating blog post")
 
-        generate_script = self.scripts_dir / "generate_post.py"
-        if not generate_script.exists():
-            self.print_error(f"Script not found: {generate_script}")
-            return False
-
+        # Use uv run to execute the generate-post command
         command = [
-            str(generate_script),
+            "uv",
+            "run",
+            "generate-post",
             "--config",
             str(self.config_path),
             "--input",
@@ -228,7 +229,7 @@ class WorkflowOrchestrator:
             self.print_warning("Gemfile not found, skipping Jekyll build")
             return True
 
-        command = ["bundle", "exec", "jekyll", "build", "--source", "jekyll", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', self.default_build_path)]
+        command = ["bundle", "exec", "jekyll", "build", "--source", "jekyll", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', str(self.default_build_path))]
 
         success, stdout, stderr = self.run_command(
             command, "Building Jekyll site", capture_output=True
@@ -340,6 +341,9 @@ Examples:
 
   # Use custom config
   %(prog)s --config custom-config.yml
+
+  # Use example data (no GitHub API calls)
+  %(prog)s --example
         """,
     )
 
@@ -358,6 +362,11 @@ Examples:
         default="config.yml",
         help="Path to config file (default: config.yml)",
     )
+    parser.add_argument(
+        "--example",
+        action="store_true",
+        help="Use example commit data instead of fetching from GitHub",
+    )
 
     args = parser.parse_args()
 
@@ -365,6 +374,7 @@ Examples:
         config_path=args.config,
         dry_run=args.dry_run,
         skip_build=args.skip_build,
+        example_mode=args.example,
     )
 
     exit_code = orchestrator.run()
