@@ -9,4 +9,4 @@ generate:
   ./scripts/generate_post.py
 
 serve:
-    bundle exec jekyll serve
+    cd jekyll && bundle exec jekyll serve

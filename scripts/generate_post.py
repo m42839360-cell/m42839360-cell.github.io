@@ -331,9 +331,9 @@ author: {author}
 
 
 class PostWriter:
-    """Writes blog posts to _posts directory."""
+    """Writes blog posts to jekyll/_posts directory."""
 
-    def __init__(self, posts_dir: str = "_posts"):
+    def __init__(self, posts_dir: str = "jekyll/_posts"):
         self.posts_dir = Path(posts_dir)
 
     def write(self, filename: str, content: str) -> Path:

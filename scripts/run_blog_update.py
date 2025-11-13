@@ -49,7 +49,7 @@ class WorkflowOrchestrator:
         self.skip_build = skip_build
         self.scripts_dir = Path("scripts")
         self.work_dir = Path()
-        self.default_build_path = Path("_site")
+        self.default_build_path = Path("jekyll/_site")
 
     def print_step(self, step: int, total: int, message: str) -> None:
         """Print a step header."""
@@ -231,11 +231,11 @@ class WorkflowOrchestrator:
             return True
 
         # Check if Gemfile exists
-        if not Path("Gemfile").exists():
+        if not Path("jekyll/Gemfile").exists():
             self.print_warning("Gemfile not found, skipping Jekyll build")
             return True
 
-        command = ["bundle", "exec", "jekyll", "build", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', self.default_build_path)]
+        command = ["bundle", "exec", "jekyll", "build", "--source", "jekyll", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', self.default_build_path)]
 
         success, stdout, stderr = self.run_command(
             command, "Building Jekyll site", capture_output=True
@@ -243,7 +243,7 @@ class WorkflowOrchestrator:
 
         if success:
             self.print_success("Jekyll site built successfully")
-            self.print_info("Site available in _site/ directory")
+            self.print_info("Site available in jekyll/_site/ directory")
             return True
         else:
             self.print_error("Jekyll build failed")
@@ -307,7 +307,7 @@ class WorkflowOrchestrator:
             self.print_info(f"Processed {commit_count} commits")
             if not self.dry_run and not self.skip_build:
                 self.print_info("Site built and ready to deploy")
-                self.print_info("View locally with: bundle exec jekyll serve")
+                self.print_info("View locally with: cd jekyll && bundle exec jekyll serve")
 
             return 0
 

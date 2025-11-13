@@ -36,26 +36,25 @@ ENV PATH="/root/.local/bin:${PATH}"
 # Set working directory
 WORKDIR /app
 
-# Copy Gemfile and install Jekyll dependencies
-COPY Gemfile Gemfile.lock ./
+# Copy Jekyll site files
+COPY jekyll/ ./jekyll/
+
+# Install Jekyll dependencies
+WORKDIR /app/jekyll
 RUN bundle install
 
-# Copy Jekyll configuration and static content
-# Note: _posts/ is NOT copied - it's generated dynamically and stored on volume
-COPY _config.yml ./
-COPY _layouts/ ./_layouts/
-COPY index.html ./
-COPY assets/ ./assets/
+# Return to app root
+WORKDIR /app
 
 # Copy automation scripts
 # Note: config.yml is NOT copied - it's provided at runtime via ConfigMap
 COPY scripts/ scripts/
 
 # Note: Environment variables (GITHUB_TOKEN, etc.) are injected at runtime via Kubernetes secrets
-# Note: Persistent data (data/, _posts/, _site/, .last_build) stored on mounted volumes
+# Note: Persistent data (data/, jekyll/_posts/, jekyll/_site/, .last_build) stored on mounted volumes
 
 # Create directories that will be volume mount points
-RUN mkdir -p data _posts _site
+RUN mkdir -p data jekyll/_posts jekyll/_site
 
 # Default entrypoint runs the complete automation workflow
 ENTRYPOINT ["scripts/run_blog_update.py"]
