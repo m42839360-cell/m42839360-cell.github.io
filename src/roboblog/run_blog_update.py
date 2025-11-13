@@ -253,26 +253,47 @@ class WorkflowOrchestrator:
             return True
 
         # Check if Gemfile exists
-        if not Path("jekyll/Gemfile").exists():
+        jekyll_dir = Path("jekyll")
+        if not (jekyll_dir / "Gemfile").exists():
             self.print_warning("Gemfile not found, skipping Jekyll build")
             return True
 
-        command = ["bundle", "exec", "jekyll", "build", "--source", "jekyll", "--destination", os.environ.get('JEKYLL_BUILD_DESTINATION', str(self.default_build_path))]
+        # Determine build destination
+        build_dest = os.environ.get('JEKYLL_BUILD_DESTINATION', '_site')
 
-        success, stdout, stderr = self.run_command(
-            command, "Building Jekyll site", capture_output=True
-        )
+        # Run bundle exec from jekyll directory
+        command = ["bundle", "exec", "jekyll", "build", "--destination", build_dest]
 
-        if success:
-            self.print_success("Jekyll site built successfully")
-            self.print_info("Site available in jekyll/_site/ directory")
+        if self.dry_run:
+            self.print_info(f"DRY RUN: Would run: {' '.join(command)} (from jekyll/ directory)")
             return True
-        else:
-            self.print_error("Jekyll build failed")
-            if stdout:
-                print(stdout)
-            if stderr:
-                print(stderr)
+
+        try:
+            self.print_info("Building Jekyll site...")
+            result = subprocess.run(
+                command,
+                cwd=jekyll_dir,  # Run from jekyll directory
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            if result.returncode == 0:
+                self.print_success("Building Jekyll site completed")
+                self.print_success("Jekyll site built successfully")
+                self.print_info(f"Site available in jekyll/{build_dest}/ directory")
+                return True
+            else:
+                self.print_error(f"Building Jekyll site failed with exit code {result.returncode}")
+                self.print_error("Jekyll build failed")
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr)
+                return False
+
+        except Exception as e:
+            self.print_error(f"Building Jekyll site failed: {e}")
             return False
 
     def run(self) -> int:
