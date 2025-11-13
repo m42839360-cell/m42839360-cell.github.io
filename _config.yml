@@ -1,8 +1,7 @@
 # Site settings
-title: Dev Blog
+title: Maluio's RoboBlog
 description: Automated blog posts from commit history
-author: m42839360-cell
-email: your-email@example.com
+author: Maluio
 
 # Build settings
 markdown: kramdown
