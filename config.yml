@@ -1,6 +1,24 @@
 # Blog Automation Configuration
 # This file contains settings for the automated blog post generation system
 
+# Jekyll Site Configuration
+jekyll:
+  # Site title displayed in header and metadata
+  title: "Maluio's RoboBlog"
+
+  # Site description for metadata and feed
+  description: "Automated blog posts from commit history"
+
+  # Author name for posts and site metadata
+  author: "Maluio"
+
+  # Base URL for the site (without trailing slash)
+  # Example: "https://username.github.io"
+  url: "https://m42839360-cell.github.io"
+
+  # Subpath of your site (leave empty for root, or use /blog for subpath)
+  baseurl: ""
+
 # GitHub Configuration
 github:
   # Your GitHub username
@@ -92,6 +110,3 @@ blog:
   default_tags:
     - "development"
     - "updates"
-
-  # Author name for posts
-  author: "m42839360-cell"

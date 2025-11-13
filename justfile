@@ -12,6 +12,9 @@ fetch:
 generate:
   uv run generate-post
 
+sync:
+  uv run sync-jekyll-config
+
 run:
   uv run run-blog-update
 

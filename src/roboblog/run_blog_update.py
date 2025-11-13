@@ -206,9 +206,37 @@ class WorkflowOrchestrator:
                 print(stderr)
             return False
 
+    def step_sync_jekyll_config(self) -> bool:
+        """Step 4: Sync Jekyll configuration from config.yml."""
+        self.print_step(4, 5, "Syncing Jekyll configuration")
+
+        # Use uv run to execute the sync command
+        command = [
+            "uv",
+            "run",
+            "sync-jekyll-config",
+            "--config",
+            str(self.config_path),
+        ]
+
+        success, stdout, stderr = self.run_command(
+            command, "Syncing Jekyll config", capture_output=True
+        )
+
+        if success:
+            self.print_success("Jekyll configuration synced")
+            return True
+        else:
+            self.print_error("Failed to sync Jekyll configuration")
+            if stdout:
+                print(stdout)
+            if stderr:
+                print(stderr)
+            return False
+
     def step_build_jekyll(self) -> bool:
-        """Step 4: Build Jekyll site."""
-        self.print_step(4, 4, "Building Jekyll site")
+        """Step 5: Build Jekyll site."""
+        self.print_step(5, 5, "Building Jekyll site")
 
         if self.skip_build:
             self.print_info("Skipping Jekyll build (--skip-build flag)")
@@ -292,7 +320,12 @@ class WorkflowOrchestrator:
                 self.print_error("Failed to generate blog post")
                 return 1
 
-            # Step 4: Build Jekyll site
+            # Step 4: Sync Jekyll configuration
+            if not self.step_sync_jekyll_config():
+                self.print_error("Failed to sync Jekyll configuration")
+                return 1
+
+            # Step 5: Build Jekyll site
             if not self.step_build_jekyll():
                 self.print_error("Failed to build Jekyll site")
                 return 1

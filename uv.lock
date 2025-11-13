@@ -1835,6 +1835,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "dspy-ai" },
+    { name = "jinja2" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "requests" },
@@ -1848,6 +1849,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "dspy-ai", specifier = ">=2.4.0" },
+    { name = "jinja2", specifier = ">=3.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "pyyaml", specifier = ">=6.0.0" },
     { name = "requests", specifier = ">=2.31.0" },

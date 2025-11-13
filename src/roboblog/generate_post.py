@@ -164,6 +164,14 @@ class LLMConfig:
         """Get whether to generate no-update posts."""
         return self.config.get("automation", {}).get("enable_no_update_posts", False)
 
+    def get_jekyll_config(self) -> Dict[str, Any]:
+        """Get Jekyll configuration."""
+        return self.config.get("jekyll", {})
+
+    def get_author(self) -> str:
+        """Get author from Jekyll configuration."""
+        return self.config.get("jekyll", {}).get("author", "")
+
     def create_dspy_lm(self) -> "dspy.LM":
         """Create and return a configured DSPy LM instance.
 
@@ -272,8 +280,9 @@ class PromptBuilder:
 class JekyllPostGenerator:
     """Generates Jekyll blog posts with frontmatter."""
 
-    def __init__(self, blog_config: Dict[str, Any]):
+    def __init__(self, blog_config: Dict[str, Any], author: str = ""):
         self.blog_config = blog_config
+        self.author = author
 
     def generate(self, structured_content: Dict[str, str]) -> str:
         """Generate complete Jekyll post with frontmatter from structured content.
@@ -292,14 +301,13 @@ class JekyllPostGenerator:
         date_str = now.strftime("%Y-%m-%d")
 
         default_tags = self.blog_config.get("default_tags", ["development", "updates"])
-        author = self.blog_config.get("author", "")
 
         frontmatter = f"""---
 layout: post
 title: "{title}"
 date: {now.strftime("%Y-%m-%d %H:%M:%S %z")}
 categories: {" ".join(default_tags)}
-author: {author}
+author: {self.author}
 ---
 
 """
@@ -359,11 +367,12 @@ class TimestampUpdater:
         print(f"✓ Updated {self.file_path} with timestamp: {timestamp.isoformat()}")
 
 
-def generate_no_update_post(blog_config: Dict[str, Any]) -> str:
+def generate_no_update_post(blog_config: Dict[str, Any], author: str = "") -> str:
     """Generate a post indicating no updates for the previous day.
 
     Args:
         blog_config: Blog configuration dictionary
+        author: Author name from jekyll config
 
     Returns:
         Complete Jekyll post content with frontmatter
@@ -375,7 +384,6 @@ def generate_no_update_post(blog_config: Dict[str, Any]) -> str:
     friendly_date = yesterday.strftime("%B %d, %Y")
 
     default_tags = blog_config.get("default_tags", ["development", "updates"])
-    author = blog_config.get("author", "")
 
     title = f"No Development Updates - {friendly_date}"
 
@@ -442,10 +450,16 @@ def main():
             if llm_config.get_enable_no_update_posts():
                 print("  No commits found, generating no-update post...")
                 print("\n[2/6] Generating no-update post...")
-                post_content = generate_no_update_post(llm_config.get_blog_config())
+                post_content = generate_no_update_post(
+                    llm_config.get_blog_config(),
+                    llm_config.get_author()
+                )
 
                 # Generate filename for no-update post
-                post_generator = JekyllPostGenerator(blog_config=llm_config.get_blog_config())
+                post_generator = JekyllPostGenerator(
+                    blog_config=llm_config.get_blog_config(),
+                    author=llm_config.get_author()
+                )
                 filename = post_generator.get_filename(post_content)
 
                 if args.preview:
@@ -506,7 +520,10 @@ def main():
 
         # Generate Jekyll post
         print("\n[6/6] Creating Jekyll post...")
-        post_generator = JekyllPostGenerator(blog_config=llm_config.get_blog_config())
+        post_generator = JekyllPostGenerator(
+            blog_config=llm_config.get_blog_config(),
+            author=llm_config.get_author()
+        )
         post_content = post_generator.generate(structured_content)
         filename = post_generator.get_filename(post_content)
 

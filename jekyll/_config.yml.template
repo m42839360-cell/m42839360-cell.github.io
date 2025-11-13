@@ -1,12 +1,15 @@
 # Site settings
-title: Maluio's RoboBlog
-description: Automated blog posts from commit history
-author: Maluio
+# This file is auto-generated from config.yml - DO NOT EDIT DIRECTLY
+# Run sync_jekyll_config.py to regenerate
+
+title: "{{ title }}"
+description: "{{ description }}"
+author: "{{ author }}"
 
 # Build settings
 markdown: kramdown
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://m42839360-cell.github.io" # the base hostname & protocol for your site
+baseurl: "{{ baseurl }}" # the subpath of your site, e.g. /blog
+url: "{{ url }}" # the base hostname & protocol for your site
 
 # Plugins
 plugins:
