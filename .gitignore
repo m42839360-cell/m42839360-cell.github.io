@@ -1,3 +1,6 @@
+# Roboblog
+.last_build
+
 # Jekyll build artifacts
 _site/
 .sass-cache/
@@ -35,3 +38,4 @@ data/commits.json
 
 # python
 *.pyc
+.ruff_cache
