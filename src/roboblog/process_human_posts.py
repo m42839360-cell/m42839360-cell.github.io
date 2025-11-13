@@ -223,15 +223,37 @@ class HumanPostProcessor:
         # Combine frontmatter with content
         new_content = frontmatter + "\n" + content
 
+        # Determine new filename with date prefix (Jekyll requirement)
+        date_for_filename = creation_date if creation_date else datetime.now(timezone.utc)
+        date_prefix = date_for_filename.strftime("%Y-%m-%d")
+
+        # Check if filename already has date prefix
+        if not re.match(r"^\d{4}-\d{2}-\d{2}-", file_path.name):
+            # Need to rename file to include date
+            new_filename = f"{date_prefix}-{file_path.name}"
+            new_file_path = file_path.parent / new_filename
+        else:
+            # Already has date prefix
+            new_file_path = file_path
+
         # Write file (or dry run)
         if self.dry_run:
             print(f"   [DRY RUN] Would prepend frontmatter")
+            if new_file_path != file_path:
+                print(f"   [DRY RUN] Would rename to: {new_file_path.name}")
             print(f"   Preview:")
             print("   " + "\n   ".join(frontmatter.split("\n")[:8]))
         else:
             try:
+                # Write content with frontmatter
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
+
+                # Rename file if needed
+                if new_file_path != file_path:
+                    file_path.rename(new_file_path)
+                    print(f"   ✓ Renamed to: {new_file_path.name}")
+
                 print(f"   ✓ Added frontmatter")
             except Exception as e:
                 print(f"   ✗ Error writing file: {e}")

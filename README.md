@@ -200,9 +200,10 @@ You can write your own posts alongside the AI-generated ones! The system automat
 
 ### Features
 
-- **No date in filename needed**: Just name it `my-post.md`, not `2025-11-13-my-post.md`
+- **No date in filename needed**: Just name it `my-post.md` (will be renamed to `2025-11-13-my-post.md` automatically)
 - **Git-based dates**: Creation date from first commit, last modified from latest commit
 - **Automatic frontmatter**: Write plain markdown, the system adds YAML headers
+- **Automatic renaming**: Files are renamed to Jekyll's required `YYYY-MM-DD-title.md` format
 - **Update tracking**: Edit your post anytime, dates update automatically
 - **Visual distinction**: 👤 for your posts, 🤖 for AI-generated posts
 
