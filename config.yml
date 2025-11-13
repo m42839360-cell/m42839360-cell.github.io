@@ -62,13 +62,6 @@ automation:
   # Maximum commits to include in a single post
   max_commits: 20
 
-  # Post frequency (REFERENCE ONLY for GitHub Actions)
-  # The actual schedule is defined in .github/workflows/auto-blog.yml
-  # Current workflow schedule: Weekly (Monday at 9 AM UTC)
-  # To change frequency, edit the cron expression in the workflow file
-  # Options: "daily", "weekly", "biweekly", "monthly"
-  frequency: "weekly"
-
 # Blog Post Settings
 blog:
   # Post title template
