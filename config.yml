@@ -91,6 +91,11 @@ automation:
   # Path to example commit data file (relative to project root)
   example_data_path: "data/example_commits.json"
 
+  # Human posts repository URL
+  # The system will clone this repo to fetch human-written posts
+  # Useful for Docker deployments where posts aren't baked into the image
+  human_posts_repo: "https://github.com/maluio/robobolog.git"
+
 # Blog Post Settings
 blog:
   # Post title template

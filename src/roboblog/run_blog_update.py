@@ -238,6 +238,10 @@ class WorkflowOrchestrator:
         """Step 5: Process human-written posts and copy to Jekyll."""
         self.print_step(5, 6, "Processing human-written posts")
 
+        # Get repo URL from config if available
+        config = self.load_config()
+        repo_url = config.get("automation", {}).get("human_posts_repo")
+
         # Use uv run to execute the process-human-posts command
         command = [
             "uv",
@@ -248,6 +252,11 @@ class WorkflowOrchestrator:
             "--dest-dir",
             "jekyll/_posts",
         ]
+
+        # Add repo URL if configured (for Docker deployments)
+        if repo_url:
+            command.extend(["--repo-url", repo_url])
+            # Could also add --repo-branch if needed in config
 
         if self.dry_run:
             command.append("--dry-run")

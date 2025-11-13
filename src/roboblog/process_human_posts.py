@@ -8,11 +8,66 @@ Uses git history to determine creation and modification dates.
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Tuple
+
+
+class RepoCloner:
+    """Clones a git repository to a temporary directory."""
+
+    @staticmethod
+    def clone_repo(repo_url: str, branch: str = "main") -> Optional[Path]:
+        """Clone repository to temporary directory.
+
+        Args:
+            repo_url: Git repository URL
+            branch: Branch to clone (default: main)
+
+        Returns:
+            Path to temporary directory, or None if cloning failed
+        """
+        try:
+            temp_dir = Path(tempfile.mkdtemp(prefix="human-posts-"))
+            print(f"📦 Cloning {repo_url} (branch: {branch})...")
+
+            result = subprocess.run(
+                ["git", "clone", "--depth", "1", "--branch", branch, repo_url, str(temp_dir)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            if result.returncode == 0:
+                print(f"   ✓ Cloned to: {temp_dir}")
+                return temp_dir
+            else:
+                print(f"   ✗ Clone failed: {result.stderr}")
+                # Clean up failed clone
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                return None
+
+        except Exception as e:
+            print(f"   ✗ Clone failed: {e}")
+            return None
+
+    @staticmethod
+    def cleanup(temp_dir: Path) -> None:
+        """Remove temporary directory.
+
+        Args:
+            temp_dir: Path to temporary directory
+        """
+        try:
+            if temp_dir and temp_dir.exists():
+                shutil.rmtree(temp_dir)
+                print(f"🧹 Cleaned up temporary directory")
+        except Exception as e:
+            print(f"⚠ Warning: Could not clean up {temp_dir}: {e}")
 
 
 class GitDateExtractor:
@@ -158,11 +213,16 @@ class HumanPostProcessor:
         self,
         source_dir: str = "human-posts",
         dest_dir: str = "jekyll/_posts",
-        dry_run: bool = False
+        dry_run: bool = False,
+        repo_url: Optional[str] = None,
+        repo_branch: str = "main"
     ):
         self.source_dir = Path(source_dir)
         self.dest_dir = Path(dest_dir)
         self.dry_run = dry_run
+        self.repo_url = repo_url
+        self.repo_branch = repo_branch
+        self.temp_dir: Optional[Path] = None
         self.repo_root = self._find_repo_root()
         self.git_extractor = GitDateExtractor(self.repo_root) if self.repo_root else None
 
@@ -266,30 +326,51 @@ class HumanPostProcessor:
     def process_all(self) -> Tuple[int, int]:
         """Process all markdown files from source directory to destination.
 
+        If repo_url is provided, clones the repository first.
+
         Returns:
             Tuple of (processed_count, skipped_count)
         """
-        if not self.source_dir.exists():
-            print(f"✗ Source directory not found: {self.source_dir}")
-            return 0, 0
+        # Clone repository if URL is provided
+        if self.repo_url:
+            self.temp_dir = RepoCloner.clone_repo(self.repo_url, self.repo_branch)
+            if not self.temp_dir:
+                print(f"✗ Failed to clone repository")
+                return 0, 0
 
-        # Find all markdown files in source
-        md_files = sorted(self.source_dir.glob("*.md"))
+            # Update source directory to point to cloned repo
+            self.source_dir = self.temp_dir / "human-posts"
+            # Update git extractor to use cloned repo
+            self.repo_root = self.temp_dir
+            self.git_extractor = GitDateExtractor(self.repo_root)
 
-        if not md_files:
-            print(f"ℹ No markdown files found in {self.source_dir}")
-            return 0, 0
+        try:
+            if not self.source_dir.exists():
+                print(f"✗ Source directory not found: {self.source_dir}")
+                return 0, 0
 
-        processed = 0
-        skipped = 0
+            # Find all markdown files in source
+            md_files = sorted(self.source_dir.glob("*.md"))
 
-        for file_path in md_files:
-            if self.process_file(file_path):
-                processed += 1
-            else:
-                skipped += 1
+            if not md_files:
+                print(f"ℹ No markdown files found in {self.source_dir}")
+                return 0, 0
 
-        return processed, skipped
+            processed = 0
+            skipped = 0
+
+            for file_path in md_files:
+                if self.process_file(file_path):
+                    processed += 1
+                else:
+                    skipped += 1
+
+            return processed, skipped
+
+        finally:
+            # Clean up temporary directory if we cloned
+            if self.temp_dir:
+                RepoCloner.cleanup(self.temp_dir)
 
 
 def main():
@@ -329,6 +410,15 @@ This script:
         help="Path to destination directory (default: jekyll/_posts)",
     )
     parser.add_argument(
+        "--repo-url",
+        help="Git repository URL to clone (optional, for Docker deployments)",
+    )
+    parser.add_argument(
+        "--repo-branch",
+        default="main",
+        help="Git branch to clone (default: main)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview changes without modifying files",
@@ -339,7 +429,9 @@ This script:
     processor = HumanPostProcessor(
         source_dir=args.source_dir,
         dest_dir=args.dest_dir,
-        dry_run=args.dry_run
+        dry_run=args.dry_run,
+        repo_url=args.repo_url,
+        repo_branch=args.repo_branch
     )
 
     print("=" * 60)

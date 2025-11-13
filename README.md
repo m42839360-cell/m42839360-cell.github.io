@@ -244,6 +244,23 @@ To process human posts without running the full workflow:
 just process-human  # or: uv run process-human-posts
 ```
 
+### Docker Deployments
+
+For Docker deployments where human posts aren't baked into the image, configure the repository URL in `config.yml`:
+
+```yaml
+automation:
+  human_posts_repo: "https://github.com/your-username/your-repo.git"
+```
+
+The system will automatically:
+1. Clone the repository to a temporary directory
+2. Process human posts from `human-posts/` directory
+3. Copy them to `jekyll/_posts/` with frontmatter
+4. Clean up the temporary directory
+
+This allows you to update human posts by pushing to the repository without rebuilding the Docker image.
+
 ## Customization
 
 - **Theme**: Edit `jekyll/assets/css/style.css`
