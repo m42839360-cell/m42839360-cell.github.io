@@ -28,10 +28,14 @@ exclude:
   - config.yml.example
   - .env.example
   - .env
-  - scripts/
+  - src/
+  - pyproject.toml
+  - uv.lock
+  - .venv/
   - data/
   - .github/
   - .last_build
+  - justfile
 
 # Collections
 collections:

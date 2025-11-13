@@ -103,21 +103,49 @@ Common schedules:
 
 ## Local Testing (Optional)
 
+### Prerequisites
+
+Install [uv](https://docs.astral.sh/uv/) (Python package manager):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Install [just](https://github.com/casey/just) (task runner):
+```bash
+# macOS
+brew install just
+
+# Linux
+cargo install just
+```
+
+### Setup and Run
+
 ```bash
 # Copy environment template
 cp .env.example .env
 # Add your LLM_API_KEY to .env
 
-# Install dependencies
-bundle install
+# Install Python dependencies with uv
+just install  # or: uv sync
 
-# Test locally
-./scripts/fetch_commits.py
-./scripts/generate_post.py
+# Test scripts individually
+just fetch     # Fetch commits from GitHub
+just generate  # Generate blog post
 
-# Preview site
-bundle exec jekyll serve
-# Visit http://localhost:4000
+# Or run complete workflow
+just run       # Run fetch → generate → build
+
+# Preview Jekyll site
+just serve     # Starts Jekyll server at http://localhost:4000
+```
+
+### Development Commands
+
+```bash
+just fmt       # Format code with ruff
+just lint      # Check code quality
+just check     # Auto-fix linting issues
 ```
 
 ## Troubleshooting
@@ -139,9 +167,9 @@ bundle exec jekyll serve
 
 ## Customization
 
-- **Theme**: Edit `assets/css/style.css`
-- **LLM prompts**: Edit `scripts/generate_post.py` → `PromptBuilder`
-- **Post template**: Edit `_layouts/post.html`
+- **Theme**: Edit `jekyll/assets/css/style.css`
+- **LLM prompts**: Edit `src/roboblog/generate_post.py` → `PromptBuilder`
+- **Post template**: Edit `jekyll/_layouts/post.html`
 - **Exclude repos**: Add to `config.yml` → `exclude_repos`
 
 ## Project Structure
@@ -149,14 +177,18 @@ bundle exec jekyll serve
 ```
 .
 ├── config.yml                 # Main configuration
+├── pyproject.toml             # Python package configuration
 ├── .github/workflows/
 │   └── auto-blog.yml          # GitHub Actions workflow
-├── scripts/
+├── src/roboblog/              # Python package
 │   ├── fetch_commits.py       # Fetch commits from GitHub
-│   └── generate_post.py       # Generate post with AI
-├── _posts/                    # Published posts (auto-generated)
-├── _layouts/                  # Jekyll templates
-└── assets/css/                # Styles
+│   ├── generate_post.py       # Generate post with AI
+│   └── run_blog_update.py     # Complete workflow orchestrator
+├── jekyll/
+│   ├── _posts/                # Published posts (auto-generated)
+│   ├── _layouts/              # Jekyll templates
+│   └── assets/css/            # Styles
+└── justfile                   # Task runner commands
 ```
 
 ## License

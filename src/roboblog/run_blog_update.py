@@ -1,10 +1,3 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# dependencies = [
-#   "pyyaml>=6.0.0",
-# ]
-# requires-python = ">=3.11"
-# ///
 
 """
 Blog Update Orchestrator

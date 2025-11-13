@@ -46,9 +46,13 @@ RUN bundle install
 # Return to app root
 WORKDIR /app
 
-# Copy automation scripts
+# Copy Python package and project files
 # Note: config.yml is NOT copied - it's provided at runtime via ConfigMap
-COPY scripts/ scripts/
+COPY pyproject.toml uv.lock ./
+COPY src/ src/
+
+# Install Python dependencies
+RUN uv sync --frozen
 
 # Note: Environment variables (GITHUB_TOKEN, etc.) are injected at runtime via Kubernetes secrets
 # Note: Persistent data (data/, jekyll/_posts/, jekyll/_site/, .last_build) stored on mounted volumes
@@ -57,5 +61,5 @@ COPY scripts/ scripts/
 RUN mkdir -p data jekyll/_posts jekyll/_site
 
 # Default entrypoint runs the complete automation workflow
-ENTRYPOINT ["scripts/run_blog_update.py"]
+ENTRYPOINT ["uv", "run", "run-blog-update"]
 CMD []

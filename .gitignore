@@ -36,6 +36,11 @@ Thumbs.db
 # Note: .last_build is tracked in git for GitHub Actions timestamp persistence
 data/commits.json
 
-# python
+# Python
 *.pyc
+__pycache__/
 .ruff_cache
+.venv/
+*.egg-info/
+dist/
+build/

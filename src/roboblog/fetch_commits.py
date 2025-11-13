@@ -1,12 +1,3 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# dependencies = [
-#   "requests>=2.31.0",
-#   "pyyaml>=6.0.0",
-#   "python-dotenv>=1.0.0",
-# ]
-# requires-python = ">=3.11"
-# ///
 
 """
 GitHub Commits Fetcher

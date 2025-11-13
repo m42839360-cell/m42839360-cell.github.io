@@ -1,12 +1,3 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# dependencies = [
-#   "pyyaml>=6.0.0",
-#   "python-dotenv>=1.0.0",
-#   "dspy-ai>=2.4.0",
-# ]
-# requires-python = ">=3.11"
-# ///
 
 """
 Blog Post Generator

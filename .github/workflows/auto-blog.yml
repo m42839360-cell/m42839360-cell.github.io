@@ -47,6 +47,9 @@ jobs:
       - name: Verify uv installation
         run: uv --version
 
+      - name: Install dependencies
+        run: uv sync
+
       - name: Configure Git
         run: |
           git config --local user.name "github-actions[bot]"
@@ -58,7 +61,7 @@ jobs:
           LOOKBACK_DAYS: ${{ inputs.lookback_days || 7 }}
         run: |
           echo "Fetching commits from GitHub API..."
-          ./scripts/fetch_commits.py --config config.yml --output data/commits.json
+          uv run fetch-commits --config config.yml --output data/commits.json
 
           # Check if commits were found
           if [ -f data/commits.json ]; then
@@ -93,10 +96,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           echo "Generating blog post with LLM..."
-          ./scripts/generate_post.py --config config.yml --input data/commits.json
+          uv run generate-post --config config.yml --input data/commits.json
 
           # Check if a new post was created
-          NEW_POST=$(git status --porcelain _posts/ | grep "^??" | head -1 || echo "")
+          NEW_POST=$(git status --porcelain jekyll/_posts/ | grep "^??" | head -1 || echo "")
           if [ -n "$NEW_POST" ]; then
             POST_FILE=$(echo "$NEW_POST" | awk '{print $2}')
             echo "NEW_POST_FILE=$POST_FILE" >> $GITHUB_ENV
@@ -112,7 +115,7 @@ jobs:
           echo "Committing new blog post..."
 
           # Add the new post and updated tracking files
-          git add _posts/
+          git add jekyll/_posts/
           git add .last_build
 
           # Create commit message
@@ -186,4 +189,4 @@ jobs:
           echo "- **API key not found:** Add LLM_API_KEY to Settings → Secrets → Actions" >> $GITHUB_STEP_SUMMARY
           echo "- **Invalid API key:** Regenerate key from your LLM provider" >> $GITHUB_STEP_SUMMARY
           echo "- **Rate limiting:** GitHub token may need higher permissions" >> $GITHUB_STEP_SUMMARY
-          echo "- **Script errors:** Check if scripts run locally with \`./scripts/run_blog_update.py\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Script errors:** Check if scripts run locally with \`uv run run-blog-update\`" >> $GITHUB_STEP_SUMMARY
