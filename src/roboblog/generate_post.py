@@ -9,7 +9,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -159,6 +159,10 @@ class LLMConfig:
     def get_automation_config(self) -> Dict[str, Any]:
         """Get automation configuration."""
         return self.config.get("automation", {})
+
+    def get_enable_no_update_posts(self) -> bool:
+        """Get whether to generate no-update posts."""
+        return self.config.get("automation", {}).get("enable_no_update_posts", False)
 
     def create_dspy_lm(self) -> "dspy.LM":
         """Create and return a configured DSPy LM instance.
@@ -355,6 +359,46 @@ class TimestampUpdater:
         print(f"✓ Updated {self.file_path} with timestamp: {timestamp.isoformat()}")
 
 
+def generate_no_update_post(blog_config: Dict[str, Any]) -> str:
+    """Generate a post indicating no updates for the previous day.
+
+    Args:
+        blog_config: Blog configuration dictionary
+
+    Returns:
+        Complete Jekyll post content with frontmatter
+    """
+    now = datetime.now(timezone.utc)
+    yesterday = now - timedelta(days=1)
+
+    date_str = yesterday.strftime("%Y-%m-%d")
+    friendly_date = yesterday.strftime("%B %d, %Y")
+
+    default_tags = blog_config.get("default_tags", ["development", "updates"])
+    author = blog_config.get("author", "")
+
+    title = f"No Development Updates - {friendly_date}"
+
+    frontmatter = f"""---
+layout: post
+title: "{title}"
+date: {now.strftime("%Y-%m-%d %H:%M:%S %z")}
+categories: {" ".join(default_tags)}
+author: {author}
+---
+
+"""
+
+    content = f"""No development activity was recorded on {friendly_date}.
+
+This is an automated post generated because the `enable_no_update_posts` configuration option is enabled.
+
+Check back tomorrow for new updates!
+"""
+
+    return frontmatter + content
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -390,16 +434,48 @@ def main():
         commit_data = loader.load()
         commit_summary = loader.format_for_prompt(commit_data)
 
+        # Load LLM configuration first to check if no-update posts are enabled
+        llm_config = LLMConfig(config_path=args.config)
+        llm_config.load()
+
         if commit_data.get("total_commits", 0) == 0:
-            print("✗ No commits found to generate post")
-            sys.exit(1)
+            if llm_config.get_enable_no_update_posts():
+                print("  No commits found, generating no-update post...")
+                print("\n[2/6] Generating no-update post...")
+                post_content = generate_no_update_post(llm_config.get_blog_config())
+
+                # Generate filename for no-update post
+                post_generator = JekyllPostGenerator(blog_config=llm_config.get_blog_config())
+                filename = post_generator.get_filename(post_content)
+
+                if args.preview:
+                    print("\n⚠ PREVIEW MODE - No files will be written")
+                    print("\nFilename:", filename)
+                    print("\nContent:")
+                    print("=" * 60)
+                    print(post_content)
+                    print("=" * 60)
+                else:
+                    # Write post
+                    writer = PostWriter()
+                    filepath = writer.write(filename, post_content)
+
+                    # Update timestamp
+                    updater = TimestampUpdater()
+                    updater.update()
+
+                print("\n" + "=" * 60)
+                print("✓ Complete! Generated no-update post.")
+                print("=" * 60)
+                return
+            else:
+                print("✗ No commits found to generate post")
+                sys.exit(1)
 
         print(f"  Found {commit_data.get('total_commits')} commits")
 
-        # Load LLM configuration and configure DSPy
-        print("\n[2/6] Loading LLM configuration...")
-        llm_config = LLMConfig(config_path=args.config)
-        llm_config.load()
+        # LLM configuration already loaded above
+        print("\n[2/6] Using loaded LLM configuration...")
 
         provider = llm_config.get_provider()
         model = llm_config.get_model()

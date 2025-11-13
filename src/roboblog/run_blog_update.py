@@ -271,13 +271,20 @@ class WorkflowOrchestrator:
 
             # Step 2: Check if commits found
             has_commits, commit_count = self.step_check_commits()
-            if not has_commits:
+
+            # Check if no-update posts are enabled
+            enable_no_update = config.get("automation", {}).get("enable_no_update_posts", False)
+
+            if not has_commits and not enable_no_update:
                 self.print_info("No new commits to process, exiting")
                 print()
                 print("=" * 60)
                 self.print_success("Workflow complete (no new commits)")
                 print("=" * 60)
                 return 0
+            elif not has_commits and enable_no_update:
+                self.print_info("No commits found, but no-update posts are enabled")
+                commit_count = 0
 
             # Step 3: Generate post
             if not self.step_generate_post():

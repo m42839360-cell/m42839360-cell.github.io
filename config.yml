@@ -62,6 +62,10 @@ automation:
   # Maximum commits to include in a single post
   max_commits: 20
 
+  # Generate "no updates" posts when there are no commits
+  # Posts will say there were no updates for the previous day
+  enable_no_update_posts: false
+
 # Blog Post Settings
 blog:
   # Post title template
