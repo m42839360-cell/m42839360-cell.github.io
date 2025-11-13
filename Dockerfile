@@ -48,7 +48,7 @@ WORKDIR /app
 
 # Copy Python package and project files
 # Note: config.yml is NOT copied - it's provided at runtime via ConfigMap
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src/ src/
 
 # Install Python dependencies
