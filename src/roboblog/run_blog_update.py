@@ -235,7 +235,7 @@ class WorkflowOrchestrator:
             return False
 
     def step_process_human_posts(self) -> bool:
-        """Step 5: Process human-written posts and add frontmatter."""
+        """Step 5: Process human-written posts and copy to Jekyll."""
         self.print_step(5, 6, "Processing human-written posts")
 
         # Use uv run to execute the process-human-posts command
@@ -243,7 +243,9 @@ class WorkflowOrchestrator:
             "uv",
             "run",
             "process-human-posts",
-            "--posts-dir",
+            "--source-dir",
+            "human-posts",
+            "--dest-dir",
             "jekyll/_posts",
         ]
 
@@ -257,7 +259,7 @@ class WorkflowOrchestrator:
         if success:
             # Print relevant output
             for line in stdout.split("\n"):
-                if "Processing:" in line or "Processed:" in line or "Complete!" in line:
+                if "Processing:" in line or "Processed:" in line or "Complete!" in line or "Copied to:" in line:
                     print(f"  {line}")
             return True
         else:

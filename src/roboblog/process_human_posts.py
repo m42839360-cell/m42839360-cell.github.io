@@ -154,8 +154,14 @@ class FrontmatterGenerator:
 class HumanPostProcessor:
     """Processes human-written posts and adds frontmatter."""
 
-    def __init__(self, posts_dir: str = "jekyll/_posts", dry_run: bool = False):
-        self.posts_dir = Path(posts_dir)
+    def __init__(
+        self,
+        source_dir: str = "human-posts",
+        dest_dir: str = "jekyll/_posts",
+        dry_run: bool = False
+    ):
+        self.source_dir = Path(source_dir)
+        self.dest_dir = Path(dest_dir)
         self.dry_run = dry_run
         self.repo_root = self._find_repo_root()
         self.git_extractor = GitDateExtractor(self.repo_root) if self.repo_root else None
@@ -176,10 +182,10 @@ class HumanPostProcessor:
         return None
 
     def process_file(self, file_path: Path) -> bool:
-        """Process a single markdown file.
+        """Process a single markdown file from source and copy to destination.
 
         Args:
-            file_path: Path to the markdown file
+            file_path: Path to the markdown file in source directory
 
         Returns:
             True if file was processed, False if skipped
@@ -192,8 +198,9 @@ class HumanPostProcessor:
             print(f"✗ Error reading {file_path}: {e}")
             return False
 
-        # Check if already has frontmatter
+        # Skip if already has frontmatter (shouldn't happen in source dir, but check anyway)
         if MarkdownParser.has_frontmatter(content):
+            print(f"⚠ Skipping {file_path.name}: already has frontmatter")
             return False
 
         print(f"📝 Processing: {file_path.name}")
@@ -223,38 +230,33 @@ class HumanPostProcessor:
         # Combine frontmatter with content
         new_content = frontmatter + "\n" + content
 
-        # Determine new filename with date prefix (Jekyll requirement)
+        # Determine destination filename with date prefix (Jekyll requirement)
         date_for_filename = creation_date if creation_date else datetime.now(timezone.utc)
         date_prefix = date_for_filename.strftime("%Y-%m-%d")
 
-        # Check if filename already has date prefix
+        # Always use date prefix for destination
         if not re.match(r"^\d{4}-\d{2}-\d{2}-", file_path.name):
-            # Need to rename file to include date
-            new_filename = f"{date_prefix}-{file_path.name}"
-            new_file_path = file_path.parent / new_filename
+            dest_filename = f"{date_prefix}-{file_path.name}"
         else:
-            # Already has date prefix
-            new_file_path = file_path
+            dest_filename = file_path.name
 
-        # Write file (or dry run)
+        dest_file_path = self.dest_dir / dest_filename
+
+        # Write to destination (or dry run)
         if self.dry_run:
-            print(f"   [DRY RUN] Would prepend frontmatter")
-            if new_file_path != file_path:
-                print(f"   [DRY RUN] Would rename to: {new_file_path.name}")
+            print(f"   [DRY RUN] Would copy to: {dest_file_path}")
             print(f"   Preview:")
             print("   " + "\n   ".join(frontmatter.split("\n")[:8]))
         else:
             try:
-                # Write content with frontmatter
-                with open(file_path, "w", encoding="utf-8") as f:
+                # Ensure destination directory exists
+                self.dest_dir.mkdir(parents=True, exist_ok=True)
+
+                # Write to destination with frontmatter
+                with open(dest_file_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
 
-                # Rename file if needed
-                if new_file_path != file_path:
-                    file_path.rename(new_file_path)
-                    print(f"   ✓ Renamed to: {new_file_path.name}")
-
-                print(f"   ✓ Added frontmatter")
+                print(f"   ✓ Copied to: {dest_file_path}")
             except Exception as e:
                 print(f"   ✗ Error writing file: {e}")
                 return False
@@ -262,20 +264,20 @@ class HumanPostProcessor:
         return True
 
     def process_all(self) -> Tuple[int, int]:
-        """Process all markdown files in posts directory.
+        """Process all markdown files from source directory to destination.
 
         Returns:
             Tuple of (processed_count, skipped_count)
         """
-        if not self.posts_dir.exists():
-            print(f"✗ Posts directory not found: {self.posts_dir}")
+        if not self.source_dir.exists():
+            print(f"✗ Source directory not found: {self.source_dir}")
             return 0, 0
 
-        # Find all markdown files
-        md_files = sorted(self.posts_dir.glob("*.md"))
+        # Find all markdown files in source
+        md_files = sorted(self.source_dir.glob("*.md"))
 
         if not md_files:
-            print(f"ℹ No markdown files found in {self.posts_dir}")
+            print(f"ℹ No markdown files found in {self.source_dir}")
             return 0, 0
 
         processed = 0
@@ -293,32 +295,38 @@ class HumanPostProcessor:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Process human-written posts and add Jekyll frontmatter",
+        description="Process human-written posts and copy to Jekyll with frontmatter",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Process all posts without frontmatter
+  # Process all posts from human-posts/ to jekyll/_posts/
   %(prog)s
 
   # Dry run to preview changes
   %(prog)s --dry-run
 
-  # Custom posts directory
-  %(prog)s --posts-dir custom/_posts
+  # Custom directories
+  %(prog)s --source-dir my-posts --dest-dir jekyll/_posts
 
 This script:
-- Scans jekyll/_posts/ for markdown files without frontmatter
+- Scans human-posts/ for markdown files (bare markdown, no frontmatter)
 - Extracts dates from git history (creation and last modified)
 - Extracts title from first # heading or filename
-- Generates and prepends Jekyll frontmatter with author_type: human
+- Generates Jekyll frontmatter with author_type: human
+- Copies to jekyll/_posts/ with date prefix (YYYY-MM-DD-filename.md)
 - Falls back to current time if file is not in git yet
         """,
     )
 
     parser.add_argument(
-        "--posts-dir",
+        "--source-dir",
+        default="human-posts",
+        help="Path to source directory with human posts (default: human-posts)",
+    )
+    parser.add_argument(
+        "--dest-dir",
         default="jekyll/_posts",
-        help="Path to posts directory (default: jekyll/_posts)",
+        help="Path to destination directory (default: jekyll/_posts)",
     )
     parser.add_argument(
         "--dry-run",
@@ -328,7 +336,11 @@ This script:
 
     args = parser.parse_args()
 
-    processor = HumanPostProcessor(posts_dir=args.posts_dir, dry_run=args.dry_run)
+    processor = HumanPostProcessor(
+        source_dir=args.source_dir,
+        dest_dir=args.dest_dir,
+        dry_run=args.dry_run
+    )
 
     print("=" * 60)
     print("Human Posts Processor")

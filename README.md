@@ -181,14 +181,14 @@ You can write your own posts alongside the AI-generated ones! The system automat
 
 ### Quick Start
 
-1. **Create a markdown file** in `jekyll/_posts/`:
+1. **Create a markdown file** in `human-posts/`:
    ```bash
-   echo "# My First Post\n\nThis is my content..." > jekyll/_posts/my-first-post.md
+   echo "# My First Post\n\nThis is my content..." > human-posts/my-first-post.md
    ```
 
 2. **Commit it to git**:
    ```bash
-   git add jekyll/_posts/my-first-post.md
+   git add human-posts/my-first-post.md
    git commit -m "Add my first post"
    ```
 
@@ -196,20 +196,22 @@ You can write your own posts alongside the AI-generated ones! The system automat
    - Extract the creation date from git history
    - Extract the title from your first `#` heading
    - Generate proper Jekyll frontmatter with `author_type: human`
+   - Copy to `jekyll/_posts/2025-11-13-my-first-post.md` with frontmatter
    - Add the 👤 emoji indicator
 
 ### Features
 
-- **No date in filename needed**: Just name it `my-post.md` (will be renamed to `2025-11-13-my-post.md` automatically)
+- **Separate source directory**: Write in `human-posts/`, posts get copied to `jekyll/_posts/`
+- **No date in filename needed**: Just name it `my-post.md`, system adds date prefix when copying
 - **Git-based dates**: Creation date from first commit, last modified from latest commit
 - **Automatic frontmatter**: Write plain markdown, the system adds YAML headers
-- **Automatic renaming**: Files are renamed to Jekyll's required `YYYY-MM-DD-title.md` format
+- **Source control**: Your original markdown stays clean in `human-posts/`
 - **Update tracking**: Edit your post anytime, dates update automatically
 - **Visual distinction**: 👤 for your posts, 🤖 for AI-generated posts
 
 ### Example
 
-Create `jekyll/_posts/thoughts.md`:
+Create `human-posts/thoughts.md`:
 ```markdown
 # My Thoughts on Software
 
@@ -221,7 +223,7 @@ Today I want to share some insights about...
 - Point two
 ```
 
-After committing and building, it becomes:
+After processing, it's copied to `jekyll/_posts/2025-11-13-thoughts.md`:
 ```yaml
 ---
 layout: post
