@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ SITENAME|striptags }} - Tags{% endblock %}
+
+{% block content %}
+    <h2>Tags</h2>
+
+    <div class="tags">
+        {% for tag, articles in tags|sort %}
+            <a class="tag" href="{{ SITEURL }}/{{ tag.url }}">
+                {{ tag }} <span style="opacity: 0.6;">({{ articles|count }})</span>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

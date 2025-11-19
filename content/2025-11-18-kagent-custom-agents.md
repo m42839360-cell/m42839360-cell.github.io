@@ -2,8 +2,6 @@ Title: Creating a Custom Kagent Agent
 Date: 2015-11-17 10:20
 Category: Review
 
-# Creating Custom Kagent Agents
-
 As part of my experiments with [agents and kubernetes](https://github.com/maluio/agentic-k8s) I gave [kagent](https://kagent.dev) a shot.
 
 I came up with [this setup](https://github.com/maluio/agentic-k8s/tree/main/kagent).

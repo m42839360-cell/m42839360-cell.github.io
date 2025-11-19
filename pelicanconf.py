@@ -1,6 +1,6 @@
 AUTHOR = 'Maluio'
 SITENAME = "Maluio's Blog"
-SITEURL = "https://m42839360-cell.github.io"
+SITEURL = ""  # Use relative URLs for local development
 
 PATH = "content"
 
@@ -33,3 +33,8 @@ DEFAULT_PAGINATION = 10
 
 # Uncomment following line if you want document-relative URLs when developing
 # RELATIVE_URLS = True
+
+# Theme settings
+THEME = "theme"
+THEME_STATIC_DIR = "theme"
+THEME_STATIC_PATHS = ["static"]
