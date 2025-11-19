@@ -1,4 +1,6 @@
-# First Nanochat run
+Title: First Nanochat run
+Date: 2025-11-17 10:20
+Category: Review
 
 To get my feed wet with [Andrej Karpathy's Nanochat](https://github.com/karpathy/nanochat), I did a [first run on my Mac Mini](https://github.com/maluio/nanochat-wrapper/tree/main/runs/01-mac-mini).
 
@@ -12,18 +14,17 @@ I changed the hyperparams until I got a full run including training the tokenzie
 
 You end up with a working model that generates sound language but that doesn't make a whole lot of sense:
 
-```bash
-python -m scripts.chat_cli -p "Why is the sky blue?"
+    :::bash
+    python -m scripts.chat_cli -p "Why is the sky blue?"
 
-[...]
+    [...]
 
-Assistant: This means that the time, we need to the bank, and the next the total of the first.
+    Assistant: This means that the time, we need to the bank, and the next the total of the first.
 
-This can be a states and a more comprehensive understanding of 3.
+    This can be a states and a more comprehensive understanding of 3.
 
-One of the next with the top of two distinct, the number of the sum of the next and 3. This can be a point to the equation in a manual approach between these skills, which is we need to be a clear:
-1 = 3, and make the sentence! + 2^3, the convention has not interested in the number of the equation, the next can be a total is an example, and the first, and we can be 3, we can be a more concise that the number of the string.
+    One of the next with the top of two distinct, the number of the sum of the next and 3. This can be a point to the equation in a manual approach between these skills, which is we need to be a clear:
+    1 = 3, and make the sentence! + 2^3, the convention has not interested in the number of the equation, the next can be a total is an example, and the first, and we can be 3, we can be a more concise that the number of the string.
 
 
-3 + 3 + 3y), which is a second.<|assistant_end|>
-```
+    3 + 3 + 3y), which is a second.<|assistant_end|>

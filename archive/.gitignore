@@ -1,0 +1,54 @@
+# Roboblog
+.last_build
+
+# Jekyll build artifacts
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+jekyll/_config.yml
+
+# Bundler
+.bundle/
+vendor/
+
+# Ruby
+*.gem
+*.rbc
+.rbenv-version
+.rvmrc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Blog automation runtime files
+# Note: .last_build is tracked in git for GitHub Actions timestamp persistence
+data/commits.json
+
+# Generated blog posts
+# AI-generated posts (from commits) are not tracked
+# Human posts are tracked in human-posts/ directory and copied here
+jekyll/_posts/*.md
+# Exception: Keep human post sources tracked
+!human-posts/*.md
+
+# Python
+*.pyc
+__pycache__/
+.ruff_cache
+.venv/
+*.egg-info/
+dist/
+build/
