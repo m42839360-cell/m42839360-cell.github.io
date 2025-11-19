@@ -1,7 +1,7 @@
 [project]
-name = "Maluio's Blog"
+name = "roboblog"
 version = "0.1.0"
-description = "Maluio's Blog"
+description = "roboblog"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
