@@ -24,8 +24,7 @@ kagent  0.7.4
 
                               🔧 Tool Call: k8s_create_resource (id: call_ZJeXHdntr6BRVP6t1NjVKxUD)
                               {
-                                "yaml_content": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: cm-1\n  namespace:
-                              default\ndata:\n  foo: bar\n"
+                                "yaml_content": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: cm-1\n  namespace: default\ndata:\n  foo: bar\n"
                               }
 
 
@@ -51,7 +50,6 @@ kagent  0.7.4
                               that?
 
                               ───────────────────────────────────────────────────────────────────────────────────────────────────────
-                              ☱ Working… 0s                                                                                                           ☱ Working… 1s                                                                                                                       ☱ Working… 2s                                                                                                                       ☱ Working… 3s                                                                                                                       ☱ Working… 4s                                                                                                                       ☱ Working… 5s                                                                                                                       ☱ Working… 6s                                                                                                                       ☱ Working… 7s                                                                                                                       ☱ Working… 8s                                                                                                                       ☱ Working… 9s                                                                                                                       ☱ Working… 10s
                               > Type a message (Enter to send)
 
 ```
@@ -85,8 +83,6 @@ kagent  0.7.4
                                 }
                               }
 
-
-
                               Agent:
                               The ConfigMap named "cm-1" has been deleted from the "default" namespace.
 
@@ -94,6 +90,6 @@ kagent  0.7.4
                               appears. This ensures the resource removal was successful.
 
                               If you need assistance with any other Kubernetes resources or further verification, let me know!
-───────────────────────────────────────────────────────────────────────────────────────────────────────                  ☱ Working… 0s                                                                                                                       ☱ Working… 1s                                                                                                                       ☱ Working… 2s                                                                                                                       ☱ Working… 3s                                                                                                                       ☱ Working… 4s                                                                                                                       ☱ Working… 5s                                                                                                                       ☱ Working… 6s                                                                                                                       ☱ Working… 7s                                                                                                                       ☱ Working… 8s
+                              ───────────────────────────────────────────────────────────────────────────────────────────────────────
                               > Type a message (Enter to send)
 ```
